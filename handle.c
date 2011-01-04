@@ -1,7 +1,14 @@
 #include "handle.h"
-#include "buffer.h"
 
-static buffer_s *buffer = NULL;
+typedef struct
+{
+    handle_id_t id;
+    void *value;
+} handle_slot_s;
+
+static handle_slot_s *slots;
+
+
 
 untyped_handle_s handle_new_untyped(void *value)
 {

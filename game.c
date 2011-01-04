@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "buffer.h"
+#include "array.h"
 
 //// Predefined Types /////////////////////////////////////////////////////////
 // (damn one-pass compiler...)
@@ -11,15 +11,15 @@
 struct _game_s
 {
     entity_id_t next_entity_id;
-    buffer_s *entities;
+    array_s *entities;
 
     component_id_t next_component_id;
-    buffer_s *components; // holds component_data_s pointers
+    array_s *components; // holds component_data_s pointers
 
-    buffer_s *buffer_records;
+    array_s *buffer_records;
 
-    buffer_s *messages;
-    buffer_s *subscriptions;
+    array_s *messages;
+    array_s *subscriptions;
 };
 
 //// Entity ///////////////////////////////////////////////////////////////////
@@ -75,9 +75,9 @@ static component_data_s * get_component_data(
     game_s *game,
     component_s component)
 {
-    assert(component.index <= buffer_length(game->components));
+    assert(component.index <= array_length(game->components));
     component_data_s *component_data =
-        buffer_get(game->components, component.index);
+        array_get(game->components, component.index);
 
     if(component_data->id == component.id)
     {
@@ -215,15 +215,15 @@ game_s * game_new()
     game_s *game = malloc(sizeof(game_s));
 
     game->next_entity_id = 1;
-    game->entities = buffer_new();
+    game->entities = array_new();
 
     game->next_component_id = 1;
-    game->components = buffer_new();
+    game->components = array_new();
 
-    game->buffer_records = buffer_new();
+    game->buffer_records = array_new();
 
-    game->messages = buffer_new();
-    game->subscriptions = buffer_new();
+    game->messages = array_new();
+    game->subscriptions = array_new();
 
     return game;
 }
@@ -234,34 +234,34 @@ void game_release(game_s *game)
 
     int i;
 
-    for(i = 0; i < buffer_length(game->components); i++)
+    for(i = 0; i < array_length(game->components); i++)
     {
-        component_data_release(buffer_get(game->components, i));
+        component_data_release(array_get(game->components, i));
     }
-    buffer_release(game->components);
+    array_release(game->components);
 
-    for(i = 0; i < buffer_length(game->entities); i++)
+    for(i = 0; i < array_length(game->entities); i++)
     {
-        entity_release(buffer_get(game->entities, i));
+        entity_release(array_get(game->entities, i));
     }
-    buffer_release(game->entities);
+    array_release(game->entities);
 
-    for(i = 0; i < buffer_length(game->buffer_records); i++)
+    for(i = 0; i < array_length(game->buffer_records); i++)
     {
-        buffer_record_release(buffer_get(game->buffer_records, i));
+        buffer_record_release(array_get(game->buffer_records, i));
     }
-    buffer_release(game->buffer_records);
+    array_release(game->buffer_records);
 
 
     // if there are messages in the queue something is very wrong
-    assert(buffer_length(game->messages) == 0);
-    buffer_release(game->messages);
+    assert(array_length(game->messages) == 0);
+    array_release(game->messages);
 
-    for(i = 0; i < buffer_length(game->subscriptions); i++)
+    for(i = 0; i < array_length(game->subscriptions); i++)
     {
-        subscription_release(buffer_get(game->subscriptions, i));
+        subscription_release(array_get(game->subscriptions, i));
     }
-    buffer_release(game->subscriptions);
+    array_release(game->subscriptions);
     free(game);
 }
 
@@ -271,7 +271,7 @@ entity_s * game_add_entity(game_s *game)
 
     entity_s *entity = entity_new(game->next_entity_id++);
 
-    buffer_add(game->entities, entity);
+    array_add(game->entities, entity);
 
     return entity;
 }
@@ -285,18 +285,18 @@ component_s game_add_component(game_s *game, entity_s *entity, void *data)
     // get an empty component slot
     // do this faster please
     int i;
-    for(i = 0; i < buffer_length(game->components); i++)
+    for(i = 0; i < array_length(game->components); i++)
     {
-        if(buffer_get(game->components, i) == NULL)
+        if(array_get(game->components, i) == NULL)
             break;
     }
-    if(i == buffer_length(game->components))
+    if(i == array_length(game->components))
     {
-        buffer_add(game->components, NULL);
+        array_add(game->components, NULL);
     }
 
     // assign the component slot
-    buffer_set(game->components, i, component_data);
+    array_set(game->components, i, component_data);
 
     component_s component;
     component.id = component_data->id;
@@ -308,9 +308,9 @@ static void default_buffer_updater(
     void *component_data,
     void *buffer,
     void *source,
-    size_t buffer_size)
+    size_t array_size)
 {
-    memcpy(buffer, source, buffer_size);
+    memcpy(buffer, source, array_size);
 }
 
 const void *game_add_buffer(
@@ -333,7 +333,7 @@ const void *game_add_buffer_with_updater(
     buffer_record_s *buffer_record =
         buffer_record_new(owner, source, size, update_function);
 
-    buffer_add(game->buffer_records, buffer_record);
+    array_add(game->buffer_records, buffer_record);
     update_function(
         get_component_data(game, owner)->data,
         buffer_record->buffer,
@@ -354,7 +354,7 @@ void game_subscribe(
     assert(handler);
 
     subscription_s *subscription = subscription_new(name, subscriber, handler);
-    buffer_add(game->subscriptions, subscription);
+    array_add(game->subscriptions, subscription);
 }
 
 void *game_broadcast_message(
@@ -367,7 +367,7 @@ void *game_broadcast_message(
 
     message_s *message = message_new_broadcast(name, len);
 
-    buffer_add(game->messages, message);
+    array_add(game->messages, message);
 
     return message->content;
 }
@@ -383,7 +383,7 @@ void *game_send_message(
 
     message_s *message = message_new(to, name, len);
 
-    buffer_add(game->messages, message);
+    array_add(game->messages, message);
 
     return message->content;
 }
@@ -418,18 +418,18 @@ static int subscription_cmp(const void *a, const void *b)
     return retval;
 }
 
-static void qsort_buffer(
-    buffer_s *buffer,
+static void qsort_array(
+    array_s *array,
     int (*cmp)(const void *, const void *))
 {
-    assert(buffer);
+    assert(array);
     assert(cmp);
 
-    if(buffer_length(buffer) > 0)
+    if(array_length(array) > 0)
     {
         qsort(
-            buffer_get_ptr(buffer),
-            buffer_length(buffer),
+            array_get_ptr(array),
+            array_length(array),
             sizeof(void *), 
             cmp);
     }
@@ -438,20 +438,20 @@ static void qsort_buffer(
 static void game_dispatch_messages(game_s *game)
 {
     assert(game);
-    int subscription_count = buffer_length(game->subscriptions);
-    int message_count = buffer_length(game->messages);
+    int subscription_count = array_length(game->subscriptions);
+    int message_count = array_length(game->messages);
     int message_index = 0;
 
-    qsort_buffer(game->messages, message_cmp);
-    qsort_buffer(game->subscriptions, subscription_cmp);
+    qsort_array(game->messages, message_cmp);
+    qsort_array(game->subscriptions, subscription_cmp);
 
     while(message_index < message_count)
     {
-        message_s *message = buffer_get(game->messages, message_index);
+        message_s *message = array_get(game->messages, message_index);
 
         int subscription_index = 0;
         subscription_s *subscription =
-            buffer_get(game->subscriptions, subscription_index);
+            array_get(game->subscriptions, subscription_index);
         int cmp = 1;
 
         // skip subscriptions which have names less than the current message
@@ -459,7 +459,7 @@ static void game_dispatch_messages(game_s *game)
               (cmp = strcmp(subscription->name, message->name)) < 0)
         {
             subscription_index++;
-            subscription = buffer_get(game->subscriptions, subscription_index);
+            subscription = array_get(game->subscriptions, subscription_index);
         }
 
         // if we've found a match then handle relevant subscriptions
@@ -470,7 +470,7 @@ static void game_dispatch_messages(game_s *game)
                 // leave subscription_index alone since there may be more
                 // broadcast messages of the same type coming up
                 int broadcast_to = subscription_index;
-                subscription = buffer_get(game->subscriptions, broadcast_to);
+                subscription = array_get(game->subscriptions, broadcast_to);
                 while(broadcast_to < subscription_count &&
                       strcmp(subscription->name, message->name) == 0)
                 {
@@ -481,10 +481,10 @@ static void game_dispatch_messages(game_s *game)
                         message->content);
 
                     broadcast_to++;
-                    if(broadcast_to < buffer_length(game->subscriptions))
+                    if(broadcast_to < array_length(game->subscriptions))
                     {
                         subscription =
-                            buffer_get(game->subscriptions, broadcast_to);
+                            array_get(game->subscriptions, broadcast_to);
                     }
                 }
             }
@@ -498,7 +498,7 @@ static void game_dispatch_messages(game_s *game)
                       subscription->subscriber.id < message->to.id)
                 {
                     subscription_index++;
-                    subscription = buffer_get(
+                    subscription = array_get(
                         game->subscriptions, subscription_index);
                 }
 
@@ -517,24 +517,24 @@ static void game_dispatch_messages(game_s *game)
         message_index++;
     }
 
-    int new_message_count = buffer_length(game->messages) - message_count;
+    int new_message_count = array_length(game->messages) - message_count;
     if(new_message_count > 0)
     {
         memmove(
-            buffer_get_ptr(game->messages),
-            buffer_get_ptr(game->messages) + message_count,
+            array_get_ptr(game->messages),
+            array_get_ptr(game->messages) + message_count,
             new_message_count * sizeof(void *));
     }
-    buffer_set_length(game->messages, new_message_count);
+    array_set_length(game->messages, new_message_count);
 }
 
 static void game_update_buffers(game_s *game)
 {
     int i;
-    int record_count = buffer_length(game->buffer_records);
+    int record_count = array_length(game->buffer_records);
     for(i = 0; i < record_count; i++)
     {
-        buffer_record_s *record = buffer_get(game->buffer_records, i);
+        buffer_record_s *record = array_get(game->buffer_records, i);
         record->update_function(
             get_component_data(game, record->owner)->data,
             record->buffer,
@@ -549,7 +549,7 @@ void game_tick(game_s *game)
 
     game_broadcast_message(game, "tick", 0);
 
-    while(buffer_length(game->messages) != 0)
+    while(array_length(game->messages) != 0)
     {
         game_dispatch_messages(game);
         game_update_buffers(game);

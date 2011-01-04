@@ -1,13 +1,13 @@
 #include "renderer.h"
 #include "GL/glfw.h"
 
-#include "buffer.h"
+#include "array.h"
 #include "transform.h"
 
 typedef struct
 {
     component_s component;
-    buffer_s *sprites;
+    array_s *sprites;
 } renderer_s;
 
 static void handle_tick(void *data, const char *name, const void *content)
@@ -27,9 +27,9 @@ static void handle_tick(void *data, const char *name, const void *content)
     glColor3d(1, 1, 1);
     glBegin(GL_POINTS);
     int i;
-    for(i = 0; i < buffer_length(renderer->sprites); i++)
+    for(i = 0; i < array_length(renderer->sprites); i++)
     {
-        const transform_s *transform = buffer_get(renderer->sprites, i);
+        const transform_s *transform = array_get(renderer->sprites, i);
         glVertex3d(transform->pos.x, transform->pos.y, 0);
     }
     glEnd();
@@ -40,14 +40,14 @@ static void handle_tick(void *data, const char *name, const void *content)
 static void handle_add_sprite(void *data, const char *name, const void *content)
 {
     renderer_s *renderer = data;
-    buffer_add(renderer->sprites, *(void **)content);
+    array_add(renderer->sprites, *(void **)content);
 }
 
 const component_s add_renderer_component(game_s *game)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
     renderer->component = game_add_component(game, NULL, renderer);
-    renderer->sprites = buffer_new();
+    renderer->sprites = array_new();
 
     game_subscribe(game, renderer->component, "tick", handle_tick);
     game_subscribe(game, renderer->component, "add_sprite", handle_add_sprite);

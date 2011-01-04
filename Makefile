@@ -3,7 +3,7 @@ CFLAGS=-Wall -g -O0
 LDFLAGS=-lglfw -lGL -lGLU -lm
 
 SRC := \
-    buffer.c \
+    array.c \
     game.c \
     main.c \
     renderer.c \

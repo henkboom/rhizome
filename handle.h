@@ -6,7 +6,7 @@ typedef long long unsigned int handle_index_t;
 
 typedef struct
 {
-    handle_id id;
+    handle_id_t id;
     handle_index_t index;
 } untyped_handle_s;
 

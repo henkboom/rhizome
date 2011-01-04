@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "handle.h"
+
 // internal types
 typedef long long unsigned int entity_id_t;
 typedef long long unsigned int component_id_t;
@@ -11,11 +13,8 @@ typedef long long unsigned int component_id_t;
 typedef struct _entity_s entity_s;
 typedef struct _game_s game_s;
 
-typedef struct 
-{
-    component_id_t id;
-    size_t index;
-} component_s;
+typedef struct _component_s component_s;
+define_handle_type(component_h, component_s);
 
 // callback types
 typedef void (*buffer_updater_f)(
@@ -37,18 +36,18 @@ void game_release(game_s *game);
 entity_s * game_add_entity(game_s *game);
 
 // game component
-component_s game_add_component(game_s *game, entity_s *entity, void *data);
+component_h game_add_component(game_s *game, entity_s *entity, void *data);
 
 // game buffer
 const void * game_add_buffer(
     game_s *game,
-    component_s owner,
+    component_h owner,
     void *source,
     size_t size);
 
 const void * game_add_buffer_with_updater(
     game_s *game,
-    component_s owner,
+    component_h owner,
     void *source,
     size_t size,
     buffer_updater_f update_function);
@@ -56,7 +55,7 @@ const void * game_add_buffer_with_updater(
 // game messages
 void game_subscribe(
     game_s *game,
-    component_s subscriber,
+    component_h subscriber,
     const char *name,
     void (*handler)());
 
@@ -67,7 +66,7 @@ void *game_broadcast_message(
 
 void *game_send_message(
     game_s *game,
-    component_s to,
+    component_h to,
     const char *name,
     size_t len);
 

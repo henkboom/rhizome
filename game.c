@@ -14,7 +14,7 @@ struct _game_s
     array_s *entities;
 
     component_id_t next_component_id;
-    array_s *components; // holds component_data_s pointers
+    array_s *components;
 
     array_s *buffer_records;
 
@@ -44,61 +44,43 @@ static void entity_release(entity_s *entity)
 
 //// Component Data ///////////////////////////////////////////////////////////
 
-typedef struct
+struct _component_s
 {
     entity_s *entity;
     component_id_t id;
     void *data;
-} component_data_s;
+};
 
-static component_data_s * component_data_new(
+static component_s * component_new(
     game_s *game,
     entity_s *entity,
     void *data)
 {
     assert(game);
 
-    component_data_s *component_data = malloc(sizeof(component_data_s));
-    component_data->entity = entity;
-    component_data->id = game->next_component_id++;
-    component_data->data = data;
+    component_s *component = malloc(sizeof(component_s));
+    component->entity = entity;
+    component->id = game->next_component_id++;
+    component->data = data;
 
-    return component_data;
+    return component;
 }
 
-static void component_data_release(component_data_s *component_data)
+static void component_release(component_s *component)
 {
-    free(component_data);
-}
-
-static component_data_s * get_component_data(
-    game_s *game,
-    component_s component)
-{
-    assert(component.index <= array_length(game->components));
-    component_data_s *component_data =
-        array_get(game->components, component.index);
-
-    if(component_data->id == component.id)
-    {
-        return component_data;
-    }
-    else
-    {
-        return NULL;
-    }
+    free(component);
 }
 
 //// Message //////////////////////////////////////////////////////////////////
 
 typedef struct
 {
-    component_s to;
+    component_h to;
     char *name;
     void *content;
 } message_s;
 
-static message_s * message_new(component_s to, const char *name, size_t len)
+static message_s * message_new(component_h to, const char *name, size_t len)
 {
     assert(name);
 
@@ -121,9 +103,8 @@ static message_s * message_new(component_s to, const char *name, size_t len)
 
 static message_s *message_new_broadcast(const char *name, size_t len)
 {
-    component_s null_component;
-    null_component.id = 0;
-    null_component.index = 0;
+    component_h null_component;
+    handle_reset(&null_component);
     return message_new(null_component, name, len);
 }
 
@@ -141,13 +122,13 @@ static void message_release(message_s *message)
 typedef struct
 {
     const char *name;
-    component_s subscriber;
+    component_h subscriber;
     message_handler_f handler;
 } subscription_s;
 
 static subscription_s * subscription_new(
     const char *name,
-    component_s subscriber,
+    component_h subscriber,
     message_handler_f handler)
 {
     assert(name);
@@ -176,7 +157,7 @@ static void subscription_release(subscription_s *subscription)
 
 typedef struct
 {
-    component_s owner;
+    component_h owner;
     void *source;
     size_t size;
     buffer_updater_f update_function;
@@ -184,7 +165,7 @@ typedef struct
 } buffer_record_s;
 
 static buffer_record_s * buffer_record_new(
-    component_s owner,
+    component_h owner,
     void *source,
     size_t size,
     buffer_updater_f update_function)
@@ -214,9 +195,11 @@ game_s * game_new()
 {
     game_s *game = malloc(sizeof(game_s));
 
+    // 0 is the null entity
     game->next_entity_id = 1;
     game->entities = array_new();
 
+    // 0 is the null component
     game->next_component_id = 1;
     game->components = array_new();
 
@@ -236,7 +219,7 @@ void game_release(game_s *game)
 
     for(i = 0; i < array_length(game->components); i++)
     {
-        component_data_release(array_get(game->components, i));
+        component_release(array_get(game->components, i));
     }
     array_release(game->components);
 
@@ -276,32 +259,17 @@ entity_s * game_add_entity(game_s *game)
     return entity;
 }
 
-component_s game_add_component(game_s *game, entity_s *entity, void *data)
+component_h game_add_component(game_s *game, entity_s *entity, void *data)
 {
     assert(game);
 
-    component_data_s *component_data = component_data_new(game, entity, data);
+    component_s *component = component_new(game, entity, data);
 
-    // get an empty component slot
-    // do this faster please
-    int i;
-    for(i = 0; i < array_length(game->components); i++)
-    {
-        if(array_get(game->components, i) == NULL)
-            break;
-    }
-    if(i == array_length(game->components))
-    {
-        array_add(game->components, NULL);
-    }
+    array_add(game->components, component);
 
-    // assign the component slot
-    array_set(game->components, i, component_data);
-
-    component_s component;
-    component.id = component_data->id;
-    component.index = i;
-    return component;
+    component_h handle;
+    handle_new(&handle, component);
+    return handle;
 }
 
 static void default_buffer_updater(
@@ -315,7 +283,7 @@ static void default_buffer_updater(
 
 const void *game_add_buffer(
     game_s *game,
-    component_s owner,
+    component_h owner,
     void *source,
     size_t size)
 {
@@ -325,7 +293,7 @@ const void *game_add_buffer(
 
 const void *game_add_buffer_with_updater(
     game_s *game,
-    component_s owner,
+    component_h owner,
     void *source,
     size_t size,
     buffer_updater_f update_function)
@@ -335,7 +303,7 @@ const void *game_add_buffer_with_updater(
 
     array_add(game->buffer_records, buffer_record);
     update_function(
-        get_component_data(game, owner)->data,
+        handle_get(owner)->data,
         buffer_record->buffer,
         buffer_record->source,
         size);
@@ -345,7 +313,7 @@ const void *game_add_buffer_with_updater(
 
 void game_subscribe(
     game_s *game,
-    component_s subscriber,
+    component_h subscriber,
     const char *name,
     void (*handler)())
 {
@@ -374,7 +342,7 @@ void *game_broadcast_message(
 
 void *game_send_message(
     game_s *game,
-    component_s to,
+    component_h to,
     const char *name,
     size_t len)
 {
@@ -388,6 +356,16 @@ void *game_send_message(
     return message->content;
 }
 
+#define CMP(a, b) ((a) < (b) ? -1 : ((a) == (b) ? 0 : 1))
+
+static int component_cmp(const component_s *a, const component_s *b)
+{
+    if(a == NULL || b == NULL)
+        return CMP(a != NULL, b != NULL);
+    else
+        return CMP(a->id, b->id);
+}
+
 static int message_cmp(const void *a, const void *b)
 {
     const message_s *m_a = *(const message_s **)a;
@@ -395,10 +373,7 @@ static int message_cmp(const void *a, const void *b)
 
     int retval = strcmp(m_a->name, m_b->name);
     if(retval == 0)
-    {
-        retval = m_a->to.id < m_b->to.id ? -1 :
-                 m_a->to.id == m_b->to.id ? 0 : 1;
-    }
+        retval = component_cmp(handle_get(m_a->to), handle_get(m_b->to));
 
     return retval;
 }
@@ -410,10 +385,8 @@ static int subscription_cmp(const void *a, const void *b)
 
     int retval = strcmp(s_a->name, s_b->name);
     if(retval == 0)
-    {
-        retval = s_a->subscriber.id <  s_b->subscriber.id ? -1 :
-                 s_a->subscriber.id == s_b->subscriber.id ? 0 : 1;
-    }
+        retval = component_cmp(
+            handle_get(s_a->subscriber), handle_get(s_b->subscriber));
 
     return retval;
 }
@@ -465,7 +438,7 @@ static void game_dispatch_messages(game_s *game)
         // if we've found a match then handle relevant subscriptions
         if(cmp == 0)
         {
-            if(message->to.id == 0) // broadcast message
+            if(handle_get(message->to) == NULL) // broadcast message
             {
                 // leave subscription_index alone since there may be more
                 // broadcast messages of the same type coming up
@@ -475,8 +448,7 @@ static void game_dispatch_messages(game_s *game)
                       strcmp(subscription->name, message->name) == 0)
                 {
                     subscription->handler(
-                        get_component_data(game, subscription->subscriber)
-                            ->data,
+                        handle_get(subscription->subscriber)->data,
                         message->name,
                         message->content);
 
@@ -495,18 +467,20 @@ static void game_dispatch_messages(game_s *game)
                 cmp = 1;
                 while(subscription_index < subscription_count &&
                       (cmp = strcmp(subscription->name, message->name)) == 0 &&
-                      subscription->subscriber.id < message->to.id)
+                      component_cmp(
+                          handle_get(subscription->subscriber),
+                          handle_get(message->to)))
                 {
                     subscription_index++;
                     subscription = array_get(
                         game->subscriptions, subscription_index);
                 }
 
-                if(cmp == 0 && subscription->subscriber.id == message->to.id)
+                if(cmp == 0 && handle_get(subscription->subscriber) ==
+                   handle_get(message->to))
                 {
                     subscription->handler(
-                        get_component_data(game, subscription->subscriber)
-                            ->data,
+                        handle_get(subscription->subscriber)->data,
                         message->name,
                         message->content);
                 }
@@ -536,7 +510,7 @@ static void game_update_buffers(game_s *game)
     {
         buffer_record_s *record = array_get(game->buffer_records, i);
         record->update_function(
-            get_component_data(game, record->owner)->data,
+            handle_get(record->owner)->data,
             record->buffer,
             record->source,
             record->size);

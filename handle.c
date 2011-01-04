@@ -5,6 +5,8 @@
 
 #define SLOT_COUNT 10000
 
+untyped_handle_s null_untyped_handle = {0, 0};
+
 typedef struct
 {
     handle_id_t id;
@@ -15,7 +17,19 @@ static handle_slot_s slots[SLOT_COUNT];
 
 static handle_index_t get_free_index()
 {
+    static int initted = 0;
     int i;
+
+    if(!initted)
+    {
+        initted = 1;
+        for(i = 0; i < SLOT_COUNT; i++)
+        {
+            slots[i].id = 0;
+            slots[i].value = NULL;
+        }
+    }
+
     for(i = 0; i < SLOT_COUNT; i++)
     {
         if(slots[i].value == NULL)

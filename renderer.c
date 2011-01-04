@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    component_s component;
+    component_h component;
     array_s *sprites;
 } renderer_s;
 
@@ -44,7 +44,7 @@ static void handle_add_sprite(void *data, const char *name, const void *content)
        (void *)handle_get(*(const transform_h *)content));
 }
 
-const component_s add_renderer_component(game_s *game)
+const component_h add_renderer_component(game_s *game)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
     renderer->component = game_add_component(game, NULL, renderer);

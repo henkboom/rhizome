@@ -10,6 +10,6 @@ typedef struct
     transform_s transform;
 } sprite_s;
 
-const component_s add_renderer_component(game_s *game);
+const component_h add_renderer_component(game_s *game);
 
 #endif

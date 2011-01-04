@@ -37,7 +37,7 @@ void init_game(game_s *game)
     entity_s *entity = game_add_entity(game);
     transform_h *data = malloc(sizeof(transform_h));
     *data = add_transform_component(game, entity);
-    component_s c = game_add_component(game, entity, data);
+    component_h c = game_add_component(game, entity, data);
     game_subscribe(game, c, "tick", tick_function);
 }
 

@@ -23,6 +23,10 @@ typedef struct
        : ((dest)->_type[0] = (value), (void)0))
 untyped_handle_s handle_new_untyped(void *value);
 
+extern untyped_handle_s null_untyped_handle;
+#define handle_reset(dest) \
+    ((dest)->_handle = null_untyped_handle)
+
 
 #define handle_release(handle) \
     (handle_release_untyped((handle)._handle))

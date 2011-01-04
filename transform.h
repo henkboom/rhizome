@@ -6,7 +6,7 @@
 #include "vect.h"
 
 typedef struct {
-    component_s component;
+    component_h component;
     vect_s pos;
 } transform_s;
 define_handle_type(transform_h, const transform_s);

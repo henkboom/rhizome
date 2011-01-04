@@ -5,7 +5,7 @@
 
 typedef struct _array_s array_s;
 
-array_s *array_new_untyped();
+array_s *array_new();
 void array_release(array_s *array);
 
 size_t array_length(array_s *array);

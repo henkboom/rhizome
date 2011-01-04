@@ -40,7 +40,8 @@ static void handle_tick(void *data, const char *name, const void *content)
 static void handle_add_sprite(void *data, const char *name, const void *content)
 {
     renderer_s *renderer = data;
-    array_add(renderer->sprites, *(void **)content);
+    array_add(renderer->sprites,
+       (void *)handle_get(*(const transform_h *)content));
 }
 
 const component_s add_renderer_component(game_s *game)

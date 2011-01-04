@@ -14,22 +14,22 @@ typedef struct
     typedef struct \
     { \
         untyped_handle_s _handle; \
-        value_type _type[0]; \
+        value_type *_type[0]; \
     } handle_type
 
 // check that this works, and throws an error if the type is wrong
 #define handle_new(dest, value) \
-    (1 ? (*(untyped_handle_s *)(dest) = handle_new_untyped(value)) \
-       : (dest._type[0] = *(value)))
+    (1 ? ((dest)->_handle = handle_new_untyped((void *)(value)), (void)0) \
+       : ((dest)->_type[0] = (value), (void)0))
 untyped_handle_s handle_new_untyped(void *value);
 
 
-#define handle_release_untyped(handle) \
-    (handle_release_untyped(handle._handle))
+#define handle_release(handle) \
+    (handle_release_untyped((handle)._handle))
 void handle_release_untyped(untyped_handle_s handle);
 
 #define handle_get(handle) \
-    ( (typeof((handle)._type[0])*) handle_get_untyped((handle)._handle) )
+    ( (typeof((handle)._type[0])) handle_get_untyped((handle)._handle) )
 void * handle_get_untyped(untyped_handle_s handle);
 
 #endif

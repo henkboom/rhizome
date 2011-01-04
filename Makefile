@@ -5,6 +5,7 @@ LDFLAGS=-lglfw -lGL -lGLU -lm
 SRC := \
     array.c \
     game.c \
+	handle.c \
     main.c \
     renderer.c \
     transform.c \

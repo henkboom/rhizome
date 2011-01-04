@@ -16,7 +16,7 @@ static void handle_set_pos(void *data, const char *name, const void *content)
     transform->pos = *new_pos;
 }
 
-const transform_s * add_transform_component(game_s *game, entity_s *entity)
+transform_h add_transform_component(game_s *game, entity_s *entity)
 {
     transform_s *transform = malloc(sizeof(transform_s));
 
@@ -26,6 +26,10 @@ const transform_s * add_transform_component(game_s *game, entity_s *entity)
     game_subscribe(game, transform->component, "move", handle_move);
     game_subscribe(game, transform->component, "set_pos", handle_set_pos);
 
-    return game_add_buffer(
+    const transform_s *transform_buffer = game_add_buffer(
         game, transform->component, transform, sizeof(transform_s));
+
+    transform_h transform_handle;
+    handle_new(&transform_handle, transform_buffer);
+    return transform_handle;
 }

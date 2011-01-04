@@ -12,7 +12,7 @@ static void tick_function(
     const char *name,
     const char *content)
 {
-    const transform_s *transform = data;
+    const transform_s *transform = handle_get(*(transform_h*)data);
     vect_s *move_by =
         game_send_message(game, transform->component, "move", sizeof(vect_s));
     *move_by = make_vect(1, 1, 0);
@@ -24,9 +24,9 @@ static void tick_function(
     if(!done)
     {
         done = 1;
-        const transform_s ** content =
-            game_broadcast_message(game, "add_sprite", sizeof(transform_s *));
-        *content = transform;
+        transform_h * content =
+            game_broadcast_message(game, "add_sprite", sizeof(transform_h));
+        *content = *(transform_h*)data;
     }
 }
 
@@ -35,8 +35,9 @@ void init_game(game_s *game)
     add_renderer_component(game);
 
     entity_s *entity = game_add_entity(game);
-    const transform_s *transform = add_transform_component(game, entity);
-    component_s c = game_add_component(game, entity, (void *)transform);
+    transform_h *data = malloc(sizeof(transform_h));
+    *data = add_transform_component(game, entity);
+    component_s c = game_add_component(game, entity, data);
     game_subscribe(game, c, "tick", tick_function);
 }
 

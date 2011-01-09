@@ -46,14 +46,14 @@ static void entity_release(entity_s *entity)
 
 struct _component_s
 {
-    entity_s *entity;
+    entity_h entity;
     component_id_t id;
     void *data;
 };
 
 static component_s * component_new(
     game_s *game,
-    entity_s *entity,
+    entity_h entity,
     void *data)
 {
     assert(game);
@@ -248,7 +248,7 @@ void game_release(game_s *game)
     free(game);
 }
 
-entity_s * game_add_entity(game_s *game)
+entity_h game_add_entity(game_s *game)
 {
     assert(game);
 
@@ -256,10 +256,18 @@ entity_s * game_add_entity(game_s *game)
 
     array_add(game->entities, entity);
 
-    return entity;
+
+    entity_h handle;
+    handle_new(&handle, entity);
+    return handle;
 }
 
-component_h game_add_component(game_s *game, entity_s *entity, void *data)
+void game_remove_entity(game_s *game, entity_h entity)
+{
+    assert(0 && "unimplemented");
+}
+
+component_h game_add_component(game_s *game, entity_h entity, void *data)
 {
     assert(game);
 

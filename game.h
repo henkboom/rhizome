@@ -14,7 +14,9 @@ typedef struct _entity_s entity_s;
 typedef struct _game_s game_s;
 
 typedef struct _component_s component_s;
+
 define_handle_type(component_h, component_s);
+define_handle_type(entity_h, entity_s);
 
 // callback types
 typedef void (*buffer_updater_f)(
@@ -33,10 +35,11 @@ game_s * game_new();
 void game_release(game_s *game);
 
 // game entity
-entity_s * game_add_entity(game_s *game);
+entity_h game_add_entity(game_s *game);
+void game_remove_entity(game_s *game, entity_h entity);
 
 // game component
-component_h game_add_component(game_s *game, entity_s *entity, void *data);
+component_h game_add_component(game_s *game, entity_h entity, void *data);
 
 // game buffer
 const void * game_add_buffer(

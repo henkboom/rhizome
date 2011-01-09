@@ -34,7 +34,7 @@ void init_game(game_s *game)
 {
     add_renderer_component(game);
 
-    entity_s *entity = game_add_entity(game);
+    entity_h entity = game_add_entity(game);
     transform_h *data = malloc(sizeof(transform_h));
     *data = add_transform_component(game, entity);
     component_h c = game_add_component(game, entity, data);

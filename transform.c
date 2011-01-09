@@ -16,7 +16,7 @@ static void handle_set_pos(void *data, const char *name, const void *content)
     transform->pos = *new_pos;
 }
 
-transform_h add_transform_component(game_s *game, entity_s *entity)
+transform_h add_transform_component(game_s *game, entity_h entity)
 {
     transform_s *transform = malloc(sizeof(transform_s));
 

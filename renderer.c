@@ -7,7 +7,7 @@
 typedef struct
 {
     component_h component;
-    array_s *sprites;
+    array_of(transform_s *) sprites;
 } renderer_s;
 
 static void handle_tick(void *data, const char *name, const void *content)
@@ -47,7 +47,8 @@ static void handle_add_sprite(void *data, const char *name, const void *content)
 const component_h add_renderer_component(game_s *game)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
-    renderer->component = game_add_component(game, NULL, renderer);
+    renderer->component =
+        game_add_component(game, null_handle(entity_h), renderer);
     renderer->sprites = array_new();
 
     game_subscribe(game, renderer->component, "tick", handle_tick);

@@ -11,6 +11,6 @@ typedef struct {
 } transform_s;
 define_handle_type(transform_h, const transform_s);
 
-transform_h add_transform_component(game_s *game, entity_s *entity);
+transform_h add_transform_component(game_s *game, entity_h entity);
 
 #endif

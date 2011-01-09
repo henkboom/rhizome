@@ -8,18 +8,22 @@
 //// Predefined Types /////////////////////////////////////////////////////////
 // (damn one-pass compiler...)
 
+typedef struct _message_s message_s;
+typedef struct _subscription_s subscription_s;
+typedef struct _buffer_record_s buffer_record_s;;
+
 struct _game_s
 {
     entity_id_t next_entity_id;
-    array_s *entities;
+    array_of(entity_s *) entities;
 
     component_id_t next_component_id;
-    array_s *components;
+    array_of(component_s *) components;
 
-    array_s *buffer_records;
+    array_of(buffer_record_s *) buffer_records;
 
-    array_s *messages;
-    array_s *subscriptions;
+    array_of(message_s *) messages;
+    array_of(subscription_s *) subscriptions;
 };
 
 //// Entity ///////////////////////////////////////////////////////////////////
@@ -73,12 +77,12 @@ static void component_release(component_s *component)
 
 //// Message //////////////////////////////////////////////////////////////////
 
-typedef struct
+struct _message_s
 {
     component_h to;
     char *name;
     void *content;
-} message_s;
+};
 
 static message_s * message_new(component_h to, const char *name, size_t len)
 {
@@ -119,12 +123,12 @@ static void message_release(message_s *message)
 
 //// Subscription /////////////////////////////////////////////////////////////
 
-typedef struct
+struct _subscription_s
 {
     const char *name;
     component_h subscriber;
     message_handler_f handler;
-} subscription_s;
+};
 
 static subscription_s * subscription_new(
     const char *name,
@@ -155,14 +159,14 @@ static void subscription_release(subscription_s *subscription)
 
 //// Buffer Record ////////////////////////////////////////////////////////////
 
-typedef struct
+struct _buffer_record_s
 {
     component_h owner;
     void *source;
     size_t size;
     buffer_updater_f update_function;
     void *buffer;
-} buffer_record_s;
+};
 
 static buffer_record_s * buffer_record_new(
     component_h owner,
@@ -400,7 +404,7 @@ static int subscription_cmp(const void *a, const void *b)
 }
 
 static void qsort_array(
-    array_s *array,
+    array_of(void *) array,
     int (*cmp)(const void *, const void *))
 {
     assert(array);
@@ -423,8 +427,8 @@ static void game_dispatch_messages(game_s *game)
     int message_count = array_length(game->messages);
     int message_index = 0;
 
-    qsort_array(game->messages, message_cmp);
-    qsort_array(game->subscriptions, subscription_cmp);
+    qsort_array((void *)game->messages, message_cmp);
+    qsort_array((void *)game->subscriptions, subscription_cmp);
 
     while(message_index < message_count)
     {

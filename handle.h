@@ -27,6 +27,7 @@ extern untyped_handle_s null_untyped_handle;
 #define handle_reset(dest) \
     ((dest)->_handle = null_untyped_handle)
 
+#define null_handle(type) (*(type*)(&null_untyped_handle))
 
 #define handle_release(handle) \
     (handle_release_untyped((handle)._handle))

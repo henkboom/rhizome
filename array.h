@@ -23,7 +23,7 @@ typedef struct {
     untyped_array_release(&(array)->_untyped)
 
 #define array_length(array) \
-    (untyped_array_length(&(array)->_untyped) / sizeof(*(array)->_typed_data))
+    ((array)->_untyped.length / sizeof(*(array)->_typed_data))
 
 #define array_set_length(array, new_length) \
     untyped_array_set_length( \
@@ -56,7 +56,6 @@ typedef struct {
 untyped_array_s *untyped_array_new();
 void untyped_array_release(untyped_array_s *array);
 
-size_t untyped_array_length(untyped_array_s *array);
 void untyped_array_set_length(untyped_array_s *array, size_t new_length);
 void untyped_array_ensure_capacity(untyped_array_s *array, size_t min_capacity);
 void untyped_array_set_capacity(untyped_array_s *array, size_t new_capacity);

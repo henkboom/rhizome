@@ -25,11 +25,6 @@ void untyped_array_release(untyped_array_s *array)
     free(array);
 }
 
-size_t untyped_array_length(untyped_array_s *array)
-{
-    return array->length;
-}
-
 void untyped_array_set_length(untyped_array_s *array, size_t new_length)
 {
     assert(array);

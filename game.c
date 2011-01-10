@@ -15,10 +15,11 @@ typedef struct _buffer_record_s buffer_record_s;;
 struct _game_s
 {
     entity_id_t next_entity_id;
-    array_of(entity_s *) entities;
+    array_of(entity_h) entities;
+    array_of(entity_h) entities_to_remove;
 
     component_id_t next_component_id;
-    array_of(component_s *) components;
+    array_of(component_h) components;
 
     array_of(buffer_record_s *) buffer_records;
 
@@ -165,7 +166,7 @@ struct _buffer_record_s
     void *source;
     size_t size;
     buffer_updater_f update_function;
-    void *buffer;
+    void_h buffer_handle
 };
 
 static buffer_record_s * buffer_record_new(
@@ -180,7 +181,7 @@ static buffer_record_s * buffer_record_new(
     buffer_record->source = source;
     buffer_record->size = size;
     buffer_record->update_function = update_function;
-    buffer_record->buffer = malloc(size);
+    handle_new(&buffer_record->buffer_handle, malloc(size));
 
     return buffer_record;
 }
@@ -189,7 +190,8 @@ static void buffer_record_release(buffer_record_s *buffer_record)
 {
     assert(buffer_record);
 
-    free(buffer_record->buffer);
+    free(handle_get(buffer_record->buffer_handle));
+    handle_release(buffer_record->buffer_handle);
     free(buffer_record);
 }
 
@@ -202,6 +204,7 @@ game_s * game_new()
     // 0 is the null entity
     game->next_entity_id = 1;
     game->entities = array_new();
+    game->entities_to_remove = array_new();
 
     // 0 is the null component
     game->next_component_id = 1;
@@ -221,23 +224,25 @@ void game_release(game_s *game)
 
     int i;
 
-    for(i = 0; i < array_length(game->components); i++)
-    {
-        component_release(array_get(game->components, i));
-    }
-    array_release(game->components);
+    // TODO: rewrite this to use game_handle_removals()
 
-    for(i = 0; i < array_length(game->entities); i++)
-    {
-        entity_release(array_get(game->entities, i));
-    }
-    array_release(game->entities);
+    //for(i = 0; i < array_length(game->components); i++)
+    //{
+    //    component_release(array_get(game->components, i));
+    //}
+    //array_release(game->components);
 
-    for(i = 0; i < array_length(game->buffer_records); i++)
-    {
-        buffer_record_release(array_get(game->buffer_records, i));
-    }
-    array_release(game->buffer_records);
+    //for(i = 0; i < array_length(game->entities); i++)
+    //{
+    //    entity_release(array_get(game->entities, i));
+    //}
+    //array_release(game->entities);
+
+    //for(i = 0; i < array_length(game->buffer_records); i++)
+    //{
+    //    buffer_record_release(array_get(game->buffer_records, i));
+    //}
+    //array_release(game->buffer_records);
 
 
     // if there are messages in the queue something is very wrong
@@ -256,31 +261,28 @@ entity_h game_add_entity(game_s *game)
 {
     assert(game);
 
-    entity_s *entity = entity_new(game->next_entity_id++);
-
-    array_add(game->entities, entity);
-
-
     entity_h handle;
-    handle_new(&handle, entity);
+    handle_new(&handle, entity_new(game->next_entity_id++));
+    array_add(game->entities, handle);
+
     return handle;
 }
 
 void game_remove_entity(game_s *game, entity_h entity)
 {
-    assert(0 && "unimplemented");
+    assert(handle_get(entity));
+    array_add(game->entities_to_remove, entity);
 }
 
 component_h game_add_component(game_s *game, entity_h entity, void *data)
 {
     assert(game);
-
-    component_s *component = component_new(game, entity, data);
-
-    array_add(game->components, component);
+    assert(handle_get(entity) != NULL);
 
     component_h handle;
-    handle_new(&handle, component);
+    handle_new(&handle, component_new(game, entity, data));
+    array_add(game->components, handle);
+
     return handle;
 }
 
@@ -293,22 +295,24 @@ static void default_buffer_updater(
     memcpy(buffer, source, array_size);
 }
 
-const void *game_add_buffer(
-    game_s *game,
-    component_h owner,
-    void *source,
-    size_t size)
-{
-    return game_add_buffer_with_updater(
-        game, owner, source, size, default_buffer_updater);
-}
-
-const void *game_add_buffer_with_updater(
+void game_add_buffer(
     game_s *game,
     component_h owner,
     void *source,
     size_t size,
-    buffer_updater_f update_function)
+    void_h *out)
+{
+    game_add_buffer_with_updater(
+        game, owner, source, size, default_buffer_updater, out);
+}
+
+void game_add_buffer_with_updater(
+    game_s *game,
+    component_h owner,
+    void *source,
+    size_t size,
+    buffer_updater_f update_function,
+    void_h *out)
 {
     buffer_record_s *buffer_record =
         buffer_record_new(owner, source, size, update_function);
@@ -316,11 +320,11 @@ const void *game_add_buffer_with_updater(
     array_add(game->buffer_records, buffer_record);
     update_function(
         handle_get(owner)->data,
-        buffer_record->buffer,
+        handle_get(buffer_record->buffer_handle),
         buffer_record->source,
         size);
 
-    return buffer_record->buffer;
+    *out = buffer_record->buffer_handle;
 }
 
 void game_subscribe(
@@ -367,6 +371,8 @@ void *game_send_message(
 
     return message->content;
 }
+
+//// Message Dispatch ////
 
 #define CMP(a, b) ((a) < (b) ? -1 : ((a) == (b) ? 0 : 1))
 
@@ -514,6 +520,120 @@ static void game_dispatch_messages(game_s *game)
     array_set_length(game->messages, new_message_count);
 }
 
+//// Entity Removal Processing ////
+
+static int is_not_null_pointer(void *value)
+{
+    return *(void **)value != NULL;
+}
+
+static int is_not_null_handle(void *value)
+{
+    return handle_get(*(void_h*)value) != NULL;
+}
+
+static int filter(void *array, int count, int item_size, int (*keep)(void *))
+{
+    void *src = array;
+    void *dst = array;
+    void *end = array + count * item_size;
+
+    while(src != end && keep(src))
+    {
+        src += item_size;
+        dst += item_size;
+    }
+    while(src != end)
+    {
+        if(keep(src))
+        {
+            memcpy(dst, src, item_size);
+            dst += item_size;
+        }
+        src += item_size;
+    }
+
+    return (dst - array) / item_size;
+}
+
+#define FILTER_ARRAY(array, keep) \
+    array_set_length(array, \
+        filter(array_get_ptr(array), \
+               array_length(array), \
+               sizeof(array_get(array, 0)), \
+               keep))
+
+static void game_handle_removals(game_s *game)
+{
+    int i;
+
+    //while(array_length(game->entities_to_remove) > 0)
+    {
+        // remove dead entities
+        for(i = 0; i < array_length(game->entities_to_remove); i++)
+        {
+            entity_h handle = array_get(game->entities_to_remove, i);
+            entity_s *entity = handle_get(handle);
+            if(entity != NULL)
+            {
+                entity_release(entity);
+                handle_release(handle);
+                //printf("removed entity\n");
+            }
+        }
+        array_set_length(game->entities_to_remove, 0);
+        //printf("before: %lu entities\n", array_length(game->entities));
+        FILTER_ARRAY(game->entities, is_not_null_handle);
+        //printf("after: %lu entities\n", array_length(game->entities));
+
+        // remove dead components
+        for(i = 0; i < array_length(game->components); i++)
+        {
+            component_h handle = array_get(game->components, i);
+            component_s *component = handle_get(handle);
+            if(handle_get(component->entity) == NULL)
+            {
+                component_release(component);
+                handle_release(handle);
+                //printf("removed component\n");
+            }
+        }
+        //printf("before: %lu components\n", array_length(game->components));
+        FILTER_ARRAY(game->components, is_not_null_handle);
+        //printf("after: %lu components\n", array_length(game->components));
+
+        for(i = 0; i < array_length(game->buffer_records); i++)
+        {
+            buffer_record_s *record = array_get(game->buffer_records, i);
+            if(handle_get(record->owner) == NULL)
+            {
+                buffer_record_release(record);
+                array_set(game->buffer_records, i, NULL);
+                //printf("removed buffer\n");
+            }
+        }
+        //printf("before: %lu buffers\n", array_length(game->buffer_records));
+        FILTER_ARRAY(game->buffer_records, is_not_null_pointer);
+        //printf("after: %lu buffers\n", array_length(game->buffer_records));
+
+        for(i = 0; i < array_length(game->subscriptions); i++)
+        {
+            subscription_s *subscription = array_get(game->subscriptions, i);
+            if(handle_get(subscription->subscriber) == NULL)
+            {
+                subscription_release(subscription);
+                array_set(game->subscriptions, i, NULL);
+                //printf("removed subscription\n");
+            }
+        }
+        //printf("before: %lu subs\n", array_length(game->subscriptions));
+        FILTER_ARRAY(game->subscriptions, is_not_null_pointer);
+        //printf("after: %lu subs\n", array_length(game->subscriptions));
+    }
+}
+
+//// Buffer Updates ////
+
 static void game_update_buffers(game_s *game)
 {
     int i;
@@ -523,7 +643,7 @@ static void game_update_buffers(game_s *game)
         buffer_record_s *record = array_get(game->buffer_records, i);
         record->update_function(
             handle_get(record->owner)->data,
-            record->buffer,
+            handle_get(record->buffer_handle),
             record->source,
             record->size);
     }
@@ -538,6 +658,7 @@ void game_tick(game_s *game)
     while(array_length(game->messages) != 0)
     {
         game_dispatch_messages(game);
+        game_handle_removals(game);
         game_update_buffers(game);
     }
 }

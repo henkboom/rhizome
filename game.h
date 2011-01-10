@@ -42,18 +42,20 @@ void game_remove_entity(game_s *game, entity_h entity);
 component_h game_add_component(game_s *game, entity_h entity, void *data);
 
 // game buffer
-const void * game_add_buffer(
-    game_s *game,
-    component_h owner,
-    void *source,
-    size_t size);
-
-const void * game_add_buffer_with_updater(
+void game_add_buffer(
     game_s *game,
     component_h owner,
     void *source,
     size_t size,
-    buffer_updater_f update_function);
+    void_h *out);
+
+void game_add_buffer_with_updater(
+    game_s *game,
+    component_h owner,
+    void *source,
+    size_t size,
+    buffer_updater_f update_function,
+    void_h *out);
 
 // game messages
 void game_subscribe(
@@ -62,6 +64,7 @@ void game_subscribe(
     const char *name,
     void (*handler)());
 
+// TODO: messages sent to dead components should not become broadcasts!
 void *game_broadcast_message(
     game_s *game,
     const char *name,

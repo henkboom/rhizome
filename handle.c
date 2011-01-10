@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define SLOT_COUNT 10000
+#define SLOT_COUNT 100000
 
 untyped_handle_s null_untyped_handle = {0, 0};
 

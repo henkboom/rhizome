@@ -1,5 +1,5 @@
 TARGET_EXE := rhizome
-CFLAGS := -Wall -g -O0
+CFLAGS := -Wall -g -O0 -std=c99
 LDFLAGS := -lglfw -lGL -lGLU -lm
 
 CC := clang

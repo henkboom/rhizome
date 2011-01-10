@@ -26,10 +26,8 @@ transform_h add_transform_component(game_s *game, entity_h entity)
     game_subscribe(game, transform->component, "move", handle_move);
     game_subscribe(game, transform->component, "set_pos", handle_set_pos);
 
-    const transform_s *transform_buffer = game_add_buffer(
-        game, transform->component, transform, sizeof(transform_s));
-
     transform_h transform_handle;
-    handle_new(&transform_handle, transform_buffer);
+    game_add_buffer(game, transform->component, transform, sizeof(transform_s),
+                    (void_h *)&transform_handle);
     return transform_handle;
 }

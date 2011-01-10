@@ -17,7 +17,8 @@ typedef struct
         value_type *_type[0]; \
     } handle_type
 
-// check that this works, and throws an error if the type is wrong
+define_handle_type(void_h, void);
+
 #define handle_new(dest, value) \
     (1 ? ((dest)->_handle = handle_new_untyped((void *)(value)), (void)0) \
        : ((dest)->_type[0] = (value), (void)0))
@@ -34,7 +35,7 @@ extern untyped_handle_s null_untyped_handle;
 void handle_release_untyped(untyped_handle_s handle);
 
 #define handle_get(handle) \
-    ( (typeof((handle)._type[0])) handle_get_untyped((handle)._handle) )
+    ( (__typeof((handle)._type[0])) handle_get_untyped((handle)._handle) )
 void * handle_get_untyped(untyped_handle_s handle);
 
 #endif

@@ -5,14 +5,21 @@
 #include "renderer.h"
 #include "transform.h"
 
-game_s *game;
+typedef struct
+{
+    game_s *game;
+    entity_h entity;
+    transform_h transform;
+} dummy_data_s;
 
 static void tick_function(
     void *data,
     const char *name,
     const char *content)
 {
-    const transform_s *transform = handle_get(*(transform_h*)data);
+    dummy_data_s *dummy_data = data;
+    game_s *game = dummy_data->game;
+    const transform_s *transform = handle_get(dummy_data->transform);
     vect_s *move_by =
         game_send_message(game, transform->component, "move", sizeof(vect_s));
     *move_by = make_vect(1, 1, 0);
@@ -26,8 +33,11 @@ static void tick_function(
         done = 1;
         transform_h * content =
             game_broadcast_message(game, "add_sprite", sizeof(transform_h));
-        *content = *(transform_h*)data;
+        *content = dummy_data->transform;
     }
+
+    if(transform->pos.x > 100)
+        game_remove_entity(game, dummy_data->entity);
 }
 
 void init_game(game_s *game)
@@ -35,8 +45,10 @@ void init_game(game_s *game)
     add_renderer_component(game);
 
     entity_h entity = game_add_entity(game);
-    transform_h *data = malloc(sizeof(transform_h));
-    *data = add_transform_component(game, entity);
+    dummy_data_s *data = malloc(sizeof(dummy_data_s));
+    data->game = game;
+    data->entity = entity;
+    data->transform = add_transform_component(game, entity);
     component_h c = game_add_component(game, entity, data);
     game_subscribe(game, c, "tick", tick_function);
 }
@@ -82,7 +94,7 @@ int main(void)
     glfwOpenWindow(WIDTH, HEIGHT, 8, 8, 8, 8, 24, 0, GLFW_WINDOW);
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    game = game_new();
+    game_s *game = game_new();
     init_game(game);
 
     main_loop(game);

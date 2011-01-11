@@ -5,7 +5,7 @@
 
 #include "array.h"
 
-//// Predefined Types /////////////////////////////////////////////////////////
+//// Predefined Stuff /////////////////////////////////////////////////////////
 // (damn one-pass compiler...)
 
 typedef struct _message_s message_s;
@@ -26,6 +26,8 @@ struct _game_s
     array_of(message_s *) messages;
     array_of(subscription_s *) subscriptions;
 };
+
+static void game_handle_removals(game_s *game);
 
 //// Entity ///////////////////////////////////////////////////////////////////
 
@@ -223,37 +225,30 @@ void game_release(game_s *game)
     assert(game);
 
     int i;
+    for(i = 0; i < array_length(game->entities); i++)
+    {
+        game_remove_entity(game, array_get(game->entities, i));
+    }
+    game_handle_removals(game);
 
-    // TODO: rewrite this to use game_handle_removals()
+    assert(array_length(game->entities) == 0);
+    array_release(game->entities);
 
-    //for(i = 0; i < array_length(game->components); i++)
-    //{
-    //    component_release(array_get(game->components, i));
-    //}
-    //array_release(game->components);
+    array_release(game->entities_to_remove);
 
-    //for(i = 0; i < array_length(game->entities); i++)
-    //{
-    //    entity_release(array_get(game->entities, i));
-    //}
-    //array_release(game->entities);
+    assert(array_length(game->components) == 0);
+    array_release(game->components);
 
-    //for(i = 0; i < array_length(game->buffer_records); i++)
-    //{
-    //    buffer_record_release(array_get(game->buffer_records, i));
-    //}
-    //array_release(game->buffer_records);
-
+    assert(array_length(game->buffer_records) == 0);
+    array_release(game->buffer_records);
 
     // if there are messages in the queue something is very wrong
     assert(array_length(game->messages) == 0);
     array_release(game->messages);
 
-    for(i = 0; i < array_length(game->subscriptions); i++)
-    {
-        subscription_release(array_get(game->subscriptions, i));
-    }
+    assert(array_length(game->subscriptions) == 0);
     array_release(game->subscriptions);
+
     free(game);
 }
 

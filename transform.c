@@ -24,18 +24,16 @@ static void release(void *data)
     free(data);
 }
 
-static void handle_transform_move(void *data, const vect_s *content)
+static void handle_transform_move(void *data, const vect_s *delta)
 {
     transform_s *transform = data;
-    const vect_s *delta = content;
 
     transform->pos = vect_add(transform->pos, *delta);
 }
 
-static void handle_transform_set_pos(void *data, const vect_s *content)
+static void handle_transform_set_pos(void *data, const vect_s *new_pos)
 {
     transform_s *transform = data;
-    const vect_s *new_pos = content;
 
     transform->pos = *new_pos;
 }

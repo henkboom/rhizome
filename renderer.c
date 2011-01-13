@@ -67,9 +67,9 @@ static void handle_tick(void *data, const void** dummy)
     glfwSwapBuffers();
 }
 
-static void handle_renderer_add_sprite(void *data, const transform_h *content)
+static void handle_renderer_add_sprite(void *data, const transform_h *sprite)
 {
     renderer_s *renderer = data;
-    array_add(renderer->sprites, *content);
+    array_add(renderer->sprites, *sprite);
 }
 

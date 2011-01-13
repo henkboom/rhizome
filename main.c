@@ -44,7 +44,7 @@ void init_game(game_s *game)
     data->game = game;
     data->entity = entity;
     data->transform = add_transform_component(game, entity);
-    component_h c = game_add_component(game, entity, NULL);
+    component_h c = game_add_component(game, entity, free);
     component_set_data(c, data);
     game_subscribe(game, c, "tick", tick_function);
 }

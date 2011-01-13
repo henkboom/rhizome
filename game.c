@@ -596,6 +596,10 @@ static void game_handle_removals(game_s *game)
             component_s *component = handle_get(handle);
             if(handle_get(component->entity) == NULL)
             {
+                if(component->release_func != NULL)
+                {
+                    component->release_func(component->data);
+                }
                 component_release(component);
                 handle_release(handle);
                 //printf("removed component\n");

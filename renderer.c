@@ -4,13 +4,37 @@
 #include "array.h"
 #include "transform.h"
 
+begin_component(renderer);
+    component_subscribe(tick);
+    component_subscribe(renderer_add_sprite);
+end_component();
+
 typedef struct
 {
     component_h component;
     array_of(transform_h) sprites;
 } renderer_s;
 
-static void handle_tick(void *data, const char *name, const void *content)
+static component_h init(game_s *game, component_h component)
+{
+    renderer_s *renderer = malloc(sizeof(renderer_s));
+
+    renderer->component = component;
+    renderer->sprites = array_new();
+
+    component_set_data(component, renderer);
+    return component;
+}
+
+static void release(void *data)
+{
+    renderer_s *renderer = data;
+
+    array_release(renderer->sprites);
+    free(renderer);
+}
+
+static void handle_tick(void *data, const void** dummy)
 {
     renderer_s *renderer = data;
 
@@ -43,21 +67,9 @@ static void handle_tick(void *data, const char *name, const void *content)
     glfwSwapBuffers();
 }
 
-static void handle_add_sprite(void *data, const char *name, const void *content)
+static void handle_renderer_add_sprite(void *data, const transform_h *content)
 {
     renderer_s *renderer = data;
-    array_add(renderer->sprites, *(const transform_h *)content);
+    array_add(renderer->sprites, *content);
 }
 
-const component_h add_renderer_component(game_s *game)
-{
-    renderer_s *renderer = malloc(sizeof(renderer_s));
-    renderer->component =
-        game_add_component(game, game_add_entity(game), renderer);
-    renderer->sprites = array_new();
-
-    game_subscribe(game, renderer->component, "tick", handle_tick);
-    game_subscribe(game, renderer->component, "add_sprite", handle_add_sprite);
-
-    return renderer->component;
-}

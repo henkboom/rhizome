@@ -5,11 +5,8 @@
 #include "transform.h"
 #include "vect.h"
 
-typedef struct
-{
-    transform_s transform;
-} sprite_s;
+declare_component(renderer, component_h);
 
-const component_h add_renderer_component(game_s *game);
+define_message(renderer_add_sprite, transform_h);
 
 #endif

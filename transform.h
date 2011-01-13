@@ -9,8 +9,12 @@ typedef struct {
     component_h component;
     vect_s pos;
 } transform_s;
+
 define_handle_type(transform_h, const transform_s);
 
-transform_h add_transform_component(game_s *game, entity_h entity);
+declare_component(transform, transform_h);
+
+define_message(transform_move, vect_s);
+define_message(transform_set_pos, vect_s);
 
 #endif

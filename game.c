@@ -55,20 +55,22 @@ struct _component_s
 {
     entity_h entity;
     component_id_t id;
+    component_release_f release_func;
     void *data;
 };
 
 static component_s * component_new(
     game_s *game,
     entity_h entity,
-    void *data)
+    component_release_f release_func)
 {
     assert(game);
 
     component_s *component = malloc(sizeof(component_s));
     component->entity = entity;
     component->id = game->next_component_id++;
-    component->data = data;
+    component->release_func = release_func;
+    component->data = NULL;
 
     return component;
 }
@@ -281,6 +283,14 @@ component_h game_add_component(game_s *game, entity_h entity, void *data)
     return handle;
 }
 
+void component_set_data(component_h component, void *data)
+{
+    component_s *c = handle_get(component);
+    assert(c != NULL);
+    assert(c->data == NULL);
+    c->data = data;
+}
+
 static void default_buffer_updater(
     void *component_data,
     void *buffer,
@@ -462,7 +472,6 @@ static void game_dispatch_messages(game_s *game)
                 {
                     subscription->handler(
                         handle_get(subscription->subscriber)->data,
-                        message->name,
                         message->content);
 
                     broadcast_to++;
@@ -494,7 +503,6 @@ static void game_dispatch_messages(game_s *game)
                 {
                     subscription->handler(
                         handle_get(subscription->subscriber)->data,
-                        message->name,
                         message->content);
                 }
             }

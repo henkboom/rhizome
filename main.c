@@ -14,25 +14,20 @@ typedef struct
 
 static void tick_function(
     void *data,
-    const char *name,
-    const char *content)
+    const void *content)
 {
     dummy_data_s *dummy_data = data;
     game_s *game = dummy_data->game;
     const transform_s *transform = handle_get(dummy_data->transform);
-    vect_s *move_by =
-        game_send_message(game, transform->component, "move", sizeof(vect_s));
-    *move_by = make_vect(1, 1, 0);
-
-    move_by = game_send_message(game, transform->component, "move", sizeof(vect_s));
-    *move_by = make_vect(0, 1, 0);
+    send_transform_move(game, transform->component, make_vect(1, 1, 0));
+    send_transform_move(game, transform->component, make_vect(0, 1, 0));
 
     static int done = 0;
     if(!done)
     {
         done = 1;
-        transform_h * content =
-            game_broadcast_message(game, "add_sprite", sizeof(transform_h));
+        transform_h * content = game_broadcast_message(
+            game, "renderer_add_sprite", sizeof(transform_h));
         *content = dummy_data->transform;
     }
 
@@ -42,14 +37,15 @@ static void tick_function(
 
 void init_game(game_s *game)
 {
-    add_renderer_component(game);
+    add_renderer_component(game, game_add_entity(game));
 
     entity_h entity = game_add_entity(game);
     dummy_data_s *data = malloc(sizeof(dummy_data_s));
     data->game = game;
     data->entity = entity;
     data->transform = add_transform_component(game, entity);
-    component_h c = game_add_component(game, entity, data);
+    component_h c = game_add_component(game, entity, NULL);
+    component_set_data(c, data);
     game_subscribe(game, c, "tick", tick_function);
 }
 

@@ -19,6 +19,9 @@ define_handle_type(component_h, component_s);
 define_handle_type(entity_h, entity_s);
 
 // callback types
+typedef void (*component_release_f)(
+    void *component_data);
+
 typedef void (*buffer_updater_f)(
     void *component_data,
     void *buffer,
@@ -27,7 +30,6 @@ typedef void (*buffer_updater_f)(
 
 typedef void (*message_handler_f)(
     void *component_data,
-    const char *name,
     const void *content);
 
 // game
@@ -40,6 +42,8 @@ void game_remove_entity(game_s *game, entity_h entity);
 
 // game component
 component_h game_add_component(game_s *game, entity_h entity, void *data);
+
+void component_set_data(component_h component, void *data);
 
 // game buffer
 void game_add_buffer(
@@ -62,7 +66,7 @@ void game_subscribe(
     game_s *game,
     component_h subscriber,
     const char *name,
-    void (*handler)());
+    message_handler_f handler);
 
 // TODO: messages sent to dead components should not become broadcasts!
 void *game_broadcast_message(
@@ -77,5 +81,50 @@ void *game_send_message(
     size_t len);
 
 void game_tick(game_s *game);
+
+#define declare_component(component_name, return_type) \
+    return_type (add_##component_name##_component)( \
+        game_s *game, entity_h entity); \
+    typedef return_type _component_return_type_##component_name;
+
+//TODO: figure out how to remove the last line of this macro
+//TODO: broadcast definition
+#define define_message(message_name, content_type) \
+    typedef content_type _message_content_type_##message_name; \
+    static inline void send_##message_name( \
+        game_s *game, \
+        component_h to, \
+        content_type content) \
+    { \
+        content_type *data = game_send_message( \
+            game, to, #message_name, sizeof(content_type)); \
+        *data = content; \
+    } \
+    typedef void (_message_handler_type_##message_name) \
+        (void *data, const content_type *); \
+    static _message_handler_type_##message_name handle_##message_name;
+
+#define begin_component(component_name) \
+    static _component_return_type_##component_name init( \
+        game_s *, component_h); \
+    static void release(void *); \
+    _component_return_type_##component_name add_##component_name##_component( \
+        game_s *game, entity_h entity) \
+    { \
+        component_h _component = game_add_component(game, entity, release); \
+        _component_return_type_##component_name _ret = init(game, _component); \
+
+#define component_subscribe(message_name) \
+        _message_handler_type_##message_name *_handler_##message_name = \
+            handle_##message_name; \
+        game_subscribe( game, _component, #message_name, \
+            (message_handler_f)_handler_##message_name);
+
+#define end_component() \
+        return _ret; \
+    }
+
+// TODO: void *?
+define_message(tick, void *);
 
 #endif

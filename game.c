@@ -85,17 +85,23 @@ static void component_release(component_s *component)
 struct _message_s
 {
     component_h to;
+    int is_broadcast;
     char *name;
     void *content;
 };
 
-static message_s * message_new(component_h to, const char *name, size_t len)
+static message_s * message_new(
+    component_h to,
+    int is_broadcast,
+    const char *name,
+    size_t len)
 {
     assert(name);
 
     message_s *message = malloc(sizeof(message_s));
 
     message->to = to;
+    message->is_broadcast = is_broadcast;
     message->name = malloc(strlen(name) + 1);
     strcpy(message->name, name);
     if(len == 0)
@@ -108,13 +114,6 @@ static message_s * message_new(component_h to, const char *name, size_t len)
     }
 
     return message;
-}
-
-static message_s *message_new_broadcast(const char *name, size_t len)
-{
-    component_h null_component;
-    handle_reset(&null_component);
-    return message_new(null_component, name, len);
 }
 
 static void message_release(message_s *message)
@@ -354,7 +353,7 @@ void *game_broadcast_message(
     assert(game);
     assert(name);
 
-    message_s *message = message_new_broadcast(name, len);
+    message_s *message = message_new(null_handle(component_h), 1, name, len);
 
     array_add(game->messages, message);
 
@@ -370,7 +369,7 @@ void *game_send_message(
     assert(game);
     assert(name);
 
-    message_s *message = message_new(to, name, len);
+    message_s *message = message_new(to, 0, name, len);
 
     array_add(game->messages, message);
 
@@ -461,7 +460,7 @@ static void game_dispatch_messages(game_s *game)
         // if we've found a match then handle relevant subscriptions
         if(cmp == 0)
         {
-            if(handle_get(message->to) == NULL) // broadcast message
+            if(message->is_broadcast) // broadcast message
             {
                 // leave subscription_index alone since there may be more
                 // broadcast messages of the same type coming up
@@ -660,7 +659,7 @@ void game_tick(game_s *game)
 {
     assert(game);
 
-    game_broadcast_message(game, "tick", 0);
+    broadcast_tick(game, 0);
 
     while(array_length(game->messages) != 0)
     {

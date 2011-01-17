@@ -68,7 +68,6 @@ void game_subscribe(
     const char *name,
     message_handler_f handler);
 
-// TODO: messages sent to dead components should not become broadcasts!
 void *game_broadcast_message(
     game_s *game,
     const char *name,
@@ -87,8 +86,7 @@ void game_tick(game_s *game);
         game_s *game, entity_h entity); \
     typedef return_type _component_return_type_##component_name;
 
-//TODO: figure out how to remove the last line of this macro
-//TODO: broadcast definition
+//TODO: figure out how to remove the last line of these next two macros
 #define define_message(message_name, content_type) \
     typedef content_type _message_content_type_##message_name; \
     static inline void send_##message_name( \
@@ -98,6 +96,20 @@ void game_tick(game_s *game);
     { \
         content_type *data = game_send_message( \
             game, to, #message_name, sizeof(content_type)); \
+        *data = content; \
+    } \
+    typedef void (_message_handler_type_##message_name) \
+        (void *data, const content_type *); \
+    static _message_handler_type_##message_name handle_##message_name;
+
+#define define_broadcast(message_name, content_type) \
+    typedef content_type _message_content_type_##message_name; \
+    static inline void broadcast_##message_name( \
+        game_s *game, \
+        content_type content) \
+    { \
+        content_type *data = game_broadcast_message( \
+            game, #message_name, sizeof(content_type)); \
         *data = content; \
     } \
     typedef void (_message_handler_type_##message_name) \
@@ -125,6 +137,6 @@ void game_tick(game_s *game);
     }
 
 // TODO: void *?
-define_message(tick, void *);
+define_broadcast(tick, void *);
 
 #endif

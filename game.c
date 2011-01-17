@@ -1,16 +1,16 @@
 #include "game.h"
 
 #include <assert.h>
-#include <string.h>
 
 #include "array.h"
+#include "string.h"
 
 //// Predefined Stuff /////////////////////////////////////////////////////////
 // (damn one-pass compiler...)
 
 typedef struct _message_s message_s;
 typedef struct _subscription_s subscription_s;
-typedef struct _buffer_record_s buffer_record_s;;
+typedef struct _buffer_record_s buffer_record_s;
 
 struct _game_s
 {
@@ -413,23 +413,6 @@ static int subscription_cmp(const void *a, const void *b)
     return retval;
 }
 
-static void qsort_array(
-    array_of(void *) array,
-    int (*cmp)(const void *, const void *))
-{
-    assert(array);
-    assert(cmp);
-
-    if(array_length(array) > 0)
-    {
-        qsort(
-            array_get_ptr(array),
-            array_length(array),
-            sizeof(void *), 
-            cmp);
-    }
-}
-
 static void game_dispatch_messages(game_s *game)
 {
     assert(game);
@@ -437,8 +420,8 @@ static void game_dispatch_messages(game_s *game)
     int message_count = array_length(game->messages);
     int message_index = 0;
 
-    qsort_array((void *)game->messages, message_cmp);
-    qsort_array((void *)game->subscriptions, subscription_cmp);
+    array_qsort(game->messages, message_cmp);
+    array_qsort(game->subscriptions, subscription_cmp);
 
     while(message_index < message_count)
     {
@@ -534,42 +517,11 @@ static int is_not_null_handle(void *value)
     return handle_get(*(void_h*)value) != NULL;
 }
 
-static int filter(void *array, int count, int item_size, int (*keep)(void *))
-{
-    void *src = array;
-    void *dst = array;
-    void *end = array + count * item_size;
-
-    while(src != end && keep(src))
-    {
-        src += item_size;
-        dst += item_size;
-    }
-    while(src != end)
-    {
-        if(keep(src))
-        {
-            memcpy(dst, src, item_size);
-            dst += item_size;
-        }
-        src += item_size;
-    }
-
-    return (dst - array) / item_size;
-}
-
-#define FILTER_ARRAY(array, keep) \
-    array_set_length(array, \
-        filter(array_get_ptr(array), \
-               array_length(array), \
-               sizeof(array_get(array, 0)), \
-               keep))
-
 static void game_handle_removals(game_s *game)
 {
     int i;
 
-    //while(array_length(game->entities_to_remove) > 0)
+    while(array_length(game->entities_to_remove) > 0)
     {
         // remove dead entities
         for(i = 0; i < array_length(game->entities_to_remove); i++)
@@ -585,7 +537,7 @@ static void game_handle_removals(game_s *game)
         }
         array_set_length(game->entities_to_remove, 0);
         //printf("before: %lu entities\n", array_length(game->entities));
-        FILTER_ARRAY(game->entities, is_not_null_handle);
+        array_filter(game->entities, is_not_null_handle);
         //printf("after: %lu entities\n", array_length(game->entities));
 
         // remove dead components
@@ -605,7 +557,7 @@ static void game_handle_removals(game_s *game)
             }
         }
         //printf("before: %lu components\n", array_length(game->components));
-        FILTER_ARRAY(game->components, is_not_null_handle);
+        array_filter(game->components, is_not_null_handle);
         //printf("after: %lu components\n", array_length(game->components));
 
         for(i = 0; i < array_length(game->buffer_records); i++)
@@ -619,7 +571,7 @@ static void game_handle_removals(game_s *game)
             }
         }
         //printf("before: %lu buffers\n", array_length(game->buffer_records));
-        FILTER_ARRAY(game->buffer_records, is_not_null_pointer);
+        array_filter(game->buffer_records, is_not_null_pointer);
         //printf("after: %lu buffers\n", array_length(game->buffer_records));
 
         for(i = 0; i < array_length(game->subscriptions); i++)
@@ -633,7 +585,7 @@ static void game_handle_removals(game_s *game)
             }
         }
         //printf("before: %lu subs\n", array_length(game->subscriptions));
-        FILTER_ARRAY(game->subscriptions, is_not_null_pointer);
+        array_filter(game->subscriptions, is_not_null_pointer);
         //printf("after: %lu subs\n", array_length(game->subscriptions));
     }
 }

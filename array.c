@@ -1,6 +1,7 @@
 #include "array.h"
 
 #include <assert.h>
+#include <string.h>
 
 struct _untyped_array_s
 {
@@ -70,4 +71,48 @@ void untyped_array_set_capacity(untyped_array_s *array, size_t new_capacity)
     {
         array->data = realloc(array->data, new_capacity);
     }
+}
+
+void untyped_array_qsort(
+    untyped_array_s *array,
+    size_t element_size,
+    int (*cmp)(const void *, const void *))
+{
+    assert(array);
+    assert(cmp);
+    assert(array->length % element_size == 0);
+
+    if(array->length > 0)
+    {
+        qsort(array->data, array->length / element_size, element_size, cmp);
+    }
+}
+
+void untyped_array_filter(
+    untyped_array_s *array,
+    size_t element_size,
+    int (*keep)(void *))
+{
+    assert(array->length % element_size == 0);
+
+    void *src = array->data;
+    void *dst = array->data;
+    void *end = array->data + array->length;
+
+    while(src != end && keep(src))
+    {
+        src += element_size;
+        dst += element_size;
+    }
+    while(src != end)
+    {
+        if(keep(src))
+        {
+            memcpy(dst, src, element_size);
+            dst += element_size;
+        }
+        src += element_size;
+    }
+
+    untyped_array_set_length(array, dst - array->data);
 }

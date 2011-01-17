@@ -34,9 +34,17 @@ static void release(void *data)
     free(renderer);
 }
 
+static int is_not_null_handle(void *value)
+{
+    return handle_get(*(void_h*)value) != NULL;
+}
+
+
 static void handle_tick(void *data, const void** dummy)
 {
     renderer_s *renderer = data;
+
+    array_filter(renderer->sprites, is_not_null_handle);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -55,7 +63,6 @@ static void handle_tick(void *data, const void** dummy)
     {
         const transform_s *transform =
             handle_get(array_get(renderer->sprites, i));
-        // TODO: actually remove dead transforms from the list
         if(transform)
         {
             //printf("%f, %f\n", transform->pos.x, transform->pos.y);

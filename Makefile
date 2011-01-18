@@ -8,6 +8,7 @@ SRC := \
 	array.c \
 	game.c \
 	handle.c \
+	input_handler.c \
 	main.c \
 	renderer.c \
 	transform.c \

@@ -1,5 +1,6 @@
 #include "renderer.h"
-#include "GL/glfw.h"
+
+#include <GL/glfw.h>
 
 #include "array.h"
 #include "transform.h"

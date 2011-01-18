@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <GL/glfw.h>
 
+#include "input_handler.h"
 #include "game.h"
 #include "renderer.h"
 #include "transform.h"
@@ -37,6 +38,7 @@ static void tick_function(
 
 void init_game(game_s *game)
 {
+    add_input_handler_component(game, game_add_entity(game));
     add_renderer_component(game, game_add_entity(game));
 
     entity_h entity = game_add_entity(game);

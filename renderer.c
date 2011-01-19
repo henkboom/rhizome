@@ -12,15 +12,13 @@ end_component();
 
 typedef struct
 {
-    component_h component;
     array_of(transform_h) sprites;
 } renderer_s;
 
-static component_h init(game_s *game, component_h component)
+static component_h init(game_context_s *context, component_h component)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
 
-    renderer->component = component;
     renderer->sprites = array_new();
 
     component_set_data(component, renderer);
@@ -41,7 +39,7 @@ static int is_not_null_handle(void *value)
 }
 
 
-static void handle_tick(void *data, const void** dummy)
+static void handle_tick(game_context_s *context, void *data, const void** dummy)
 {
     renderer_s *renderer = data;
 
@@ -75,7 +73,10 @@ static void handle_tick(void *data, const void** dummy)
     glfwSwapBuffers();
 }
 
-static void handle_renderer_add_sprite(void *data, const transform_h *sprite)
+static void handle_renderer_add_sprite(
+    game_context_s *context,
+    void *data,
+    const transform_h *sprite)
 {
     renderer_s *renderer = data;
     array_add(renderer->sprites, *sprite);

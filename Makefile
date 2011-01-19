@@ -6,6 +6,7 @@ CC := clang
 
 SRC := \
 	array.c \
+	dummy_scene.c \
 	game.c \
 	handle.c \
 	input_handler.c \

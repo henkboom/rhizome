@@ -38,4 +38,7 @@ void handle_release_untyped(untyped_handle_s handle);
     ( (__typeof((handle)._type[0])) handle_get_untyped((handle)._handle) )
 void * handle_get_untyped(untyped_handle_s handle);
 
+#define handle_live(handle) \
+    (handle_get(handle) != NULL)
+
 #endif

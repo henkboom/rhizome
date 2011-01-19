@@ -7,6 +7,6 @@
 
 declare_component(renderer, component_h);
 
-define_message(renderer_add_sprite, transform_h);
+define_broadcast(renderer_add_sprite, transform_h);
 
 #endif

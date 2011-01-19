@@ -12,6 +12,9 @@ typedef struct _message_s message_s;
 typedef struct _subscription_s subscription_s;
 typedef struct _buffer_record_s buffer_record_s;
 
+typedef long long unsigned int entity_id_t;
+typedef long long unsigned int component_id_t;
+
 struct _game_s
 {
     entity_id_t next_entity_id;
@@ -27,6 +30,13 @@ struct _game_s
     array_of(subscription_s *) subscriptions;
 };
 
+struct _game_context_s
+{
+    game_s *game;
+    component_s *component;
+};
+
+static void internal_game_remove_entity(game_s *game, entity_h entity);
 static void game_handle_removals(game_s *game);
 
 //// Entity ///////////////////////////////////////////////////////////////////
@@ -65,6 +75,7 @@ static component_s * component_new(
     component_release_f release_func)
 {
     assert(game);
+    assert(handle_live(entity));
 
     component_s *component = malloc(sizeof(component_s));
     component->entity = entity;
@@ -200,7 +211,7 @@ static void buffer_record_release(buffer_record_s *buffer_record)
 
 //// Game /////////////////////////////////////////////////////////////////////
 
-game_s * game_new()
+game_s * game_new(initial_component_f init)
 {
     game_s *game = malloc(sizeof(game_s));
 
@@ -218,6 +229,14 @@ game_s * game_new()
     game->messages = array_new();
     game->subscriptions = array_new();
 
+    // TODO this bit should probably be refactored for flexibility of
+    // game_context_s
+    game_context_s generic_context;
+    generic_context.game = game;
+    generic_context.component = NULL;
+
+    init(&generic_context, game_add_entity(&generic_context));
+
     return game;
 }
 
@@ -228,7 +247,7 @@ void game_release(game_s *game)
     int i;
     for(i = 0; i < array_length(game->entities); i++)
     {
-        game_remove_entity(game, array_get(game->entities, i));
+        internal_game_remove_entity(game, array_get(game->entities, i));
     }
     game_handle_removals(game);
 
@@ -253,31 +272,44 @@ void game_release(game_s *game)
     free(game);
 }
 
-entity_h game_add_entity(game_s *game)
+entity_h game_add_entity(game_context_s *context)
 {
-    assert(game);
+    assert(context);
 
     entity_h handle;
-    handle_new(&handle, entity_new(game->next_entity_id++));
-    array_add(game->entities, handle);
+    handle_new(&handle, entity_new(context->game->next_entity_id++));
+    array_add(context->game->entities, handle);
 
     return handle;
 }
 
-void game_remove_entity(game_s *game, entity_h entity)
+static void internal_game_remove_entity(game_s *game, entity_h entity)
 {
-    assert(handle_get(entity));
+    assert(game);
+    assert(handle_live(entity));
+
     array_add(game->entities_to_remove, entity);
 }
 
-component_h game_add_component(game_s *game, entity_h entity, void *data)
+void game_remove_entity(game_context_s *context, entity_h entity)
 {
-    assert(game);
-    assert(handle_get(entity) != NULL);
+    assert(context);
+    assert(handle_live(entity));
+
+    internal_game_remove_entity(context->game, entity);
+}
+
+component_h game_add_component(
+    game_context_s *context,
+    entity_h entity,
+    component_release_f release_func)
+{
+    assert(context);
+    assert(handle_live(entity));
 
     component_h handle;
-    handle_new(&handle, component_new(game, entity, data));
-    array_add(game->components, handle);
+    handle_new(&handle, component_new(context->game, entity, release_func));
+    array_add(context->game->components, handle);
 
     return handle;
 }
@@ -300,18 +332,18 @@ static void default_buffer_updater(
 }
 
 void game_add_buffer(
-    game_s *game,
+    game_context_s *context,
     component_h owner,
     void *source,
     size_t size,
     void_h *out)
 {
     game_add_buffer_with_updater(
-        game, owner, source, size, default_buffer_updater, out);
+        context, owner, source, size, default_buffer_updater, out);
 }
 
 void game_add_buffer_with_updater(
-    game_s *game,
+    game_context_s *context,
     component_h owner,
     void *source,
     size_t size,
@@ -321,7 +353,7 @@ void game_add_buffer_with_updater(
     buffer_record_s *buffer_record =
         buffer_record_new(owner, source, size, update_function);
 
-    array_add(game->buffer_records, buffer_record);
+    array_add(context->game->buffer_records, buffer_record);
     update_function(
         handle_get(owner)->data,
         handle_get(buffer_record->buffer_handle),
@@ -332,46 +364,46 @@ void game_add_buffer_with_updater(
 }
 
 void game_subscribe(
-    game_s *game,
+    game_context_s *context,
     component_h subscriber,
     const char *name,
     void (*handler)())
 {
-    assert(game);
+    assert(context);
     assert(name);
     assert(handler);
 
     subscription_s *subscription = subscription_new(name, subscriber, handler);
-    array_add(game->subscriptions, subscription);
+    array_add(context->game->subscriptions, subscription);
 }
 
 void *game_broadcast_message(
-    game_s *game,
+    game_context_s *context,
     const char *name,
     size_t len)
 {
-    assert(game);
+    assert(context);
     assert(name);
 
     message_s *message = message_new(null_handle(component_h), 1, name, len);
 
-    array_add(game->messages, message);
+    array_add(context->game->messages, message);
 
     return message->content;
 }
 
 void *game_send_message(
-    game_s *game,
+    game_context_s *context,
     component_h to,
     const char *name,
     size_t len)
 {
-    assert(game);
+    assert(context);
     assert(name);
 
     message_s *message = message_new(to, 0, name, len);
 
-    array_add(game->messages, message);
+    array_add(context->game->messages, message);
 
     return message->content;
 }
@@ -423,13 +455,18 @@ static void game_dispatch_messages(game_s *game)
     array_qsort(game->messages, message_cmp);
     array_qsort(game->subscriptions, subscription_cmp);
 
+    // TODO refactor game_context_s
+    game_context_s context;
+    context.game = game;
+
     while(message_index < message_count)
     {
         message_s *message = array_get(game->messages, message_index);
 
         int subscription_index = 0;
-        subscription_s *subscription =
-            array_get(game->subscriptions, subscription_index);
+        subscription_s *subscription = NULL;
+        if(subscription_count > 0)
+            subscription = array_get(game->subscriptions, subscription_index);
         int cmp = 1;
 
         // skip subscriptions which have names less than the current message
@@ -452,7 +489,9 @@ static void game_dispatch_messages(game_s *game)
                 while(broadcast_to < subscription_count &&
                       strcmp(subscription->name, message->name) == 0)
                 {
+                    context.component = handle_get(subscription->subscriber);
                     subscription->handler(
+                        &context,
                         handle_get(subscription->subscriber)->data,
                         message->content);
 
@@ -483,7 +522,9 @@ static void game_dispatch_messages(game_s *game)
                 if(cmp == 0 && handle_get(subscription->subscriber) ==
                    handle_get(message->to))
                 {
+                    context.component = handle_get(subscription->subscriber);
                     subscription->handler(
+                        &context,
                         handle_get(subscription->subscriber)->data,
                         message->content);
                 }
@@ -611,7 +652,13 @@ void game_tick(game_s *game)
 {
     assert(game);
 
-    broadcast_tick(game, 0);
+    // TODO this bit should probably be refactored for flexibility of
+    // game_context_s
+    game_context_s generic_context;
+    generic_context.game = game;
+    generic_context.component = NULL;
+
+    broadcast_tick(&generic_context, 0);
 
     while(array_length(game->messages) != 0)
     {

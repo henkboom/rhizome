@@ -57,14 +57,14 @@ void component_set_data(component_h component, void *data);
 
 // game buffer
 void game_add_buffer(
-    game_context_s *game,
+    game_context_s *context,
     component_h owner,
     void *source,
     size_t size,
     void_h *out);
 
 void game_add_buffer_with_updater(
-    game_context_s *game,
+    game_context_s *context,
     component_h owner,
     void *source,
     size_t size,
@@ -73,18 +73,18 @@ void game_add_buffer_with_updater(
 
 // game messages
 void game_subscribe(
-    game_context_s *game,
+    game_context_s *context,
     component_h subscriber,
     const char *name,
     message_handler_f handler);
 
 void *game_broadcast_message(
-    game_context_s *game,
+    game_context_s *context,
     const char *name,
     size_t len);
 
 void *game_send_message(
-    game_context_s *game,
+    game_context_s *context,
     component_h to,
     const char *name,
     size_t len);

@@ -62,7 +62,6 @@ game_context_s game_add_component(
 
 component_h game_get_self(game_context_s *context);
 
-// TODO name this better
 void game_set_component_data(game_context_s *context, void *data);
 
 // game buffer

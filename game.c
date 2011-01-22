@@ -223,8 +223,6 @@ game_s * game_new(initial_component_f init)
     game->messages = array_new();
     game->subscriptions = array_new();
 
-    // TODO this bit should probably be refactored for flexibility of
-    // game_context_s
     game_context_s generic_context;
     generic_context.game = game;
     generic_context.component = null_handle(component_h);
@@ -454,7 +452,6 @@ static void game_dispatch_messages(game_s *game)
     array_qsort(game->messages, message_cmp);
     array_qsort(game->subscriptions, subscription_cmp);
 
-    // TODO refactor game_context_s
     game_context_s context;
     context.game = game;
 
@@ -651,8 +648,6 @@ void game_tick(game_s *game)
 {
     assert(game);
 
-    // TODO this bit should probably be refactored for flexibility of
-    // game_context_s
     game_context_s generic_context;
     generic_context.game = game;
     generic_context.component = null_handle(component_h);

@@ -15,14 +15,14 @@ typedef struct
     array_of(transform_h) sprites;
 } renderer_s;
 
-static component_h init(game_context_s *context, component_h component)
+static component_h init(game_context_s *context)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
 
     renderer->sprites = array_new();
 
-    component_set_data(component, renderer);
-    return component;
+    game_set_component_data(context, renderer);
+    return game_get_self(context);
 }
 
 static void release(void *data)

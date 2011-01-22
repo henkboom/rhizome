@@ -25,15 +25,15 @@ static void GLFWCALL key_callback(int key, int action)
     printf("sent key callback %d %d\n", e.key, e.is_down);
 }
 
-static component_h init(game_context_s *context, component_h component)
+static component_h init(game_context_s *context)
 {
     input_handler_s *input_handler = malloc(sizeof(input_handler_s));
-    component_set_data(component, input_handler);
+    game_set_component_data(context, input_handler);
 
     glfwDisable(GLFW_AUTO_POLL_EVENTS);
     glfwSetKeyCallback(key_callback);
 
-    return component;
+    return game_get_self(context);
 }
 
 static void release(void *data)

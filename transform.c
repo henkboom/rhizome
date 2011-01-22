@@ -5,17 +5,17 @@ begin_component(transform);
     component_subscribe(transform_set_pos);
 end_component();
 
-static transform_h init(game_context_s *context, component_h component)
+static transform_h init(game_context_s *context)
 {
     transform_s *transform = malloc(sizeof(transform_s));
-    transform->component = component;
+    transform->component = game_get_self(context);
     transform->pos = make_vect(0, 0, 0);
 
     transform_h handle;
     game_add_buffer(
-        context, component, transform, sizeof(transform_s), (void_h *)&handle);
+        context, transform, sizeof(transform_s), (void_h *)&handle);
 
-    component_set_data(component, transform);
+    game_set_component_data(context, transform);
     return handle;
 }
 

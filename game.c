@@ -30,12 +30,6 @@ struct _game_s
     array_of(subscription_s *) subscriptions;
 };
 
-struct _game_context_s
-{
-    game_s *game;
-    component_s *component;
-};
-
 static void internal_game_remove_entity(game_s *game, entity_h entity);
 static void game_handle_removals(game_s *game);
 
@@ -233,7 +227,7 @@ game_s * game_new(initial_component_f init)
     // game_context_s
     game_context_s generic_context;
     generic_context.game = game;
-    generic_context.component = NULL;
+    generic_context.component = null_handle(component_h);
 
     init(&generic_context, game_add_entity(&generic_context));
 
@@ -299,7 +293,7 @@ void game_remove_entity(game_context_s *context, entity_h entity)
     internal_game_remove_entity(context->game, entity);
 }
 
-component_h game_add_component(
+game_context_s game_add_component(
     game_context_s *context,
     entity_h entity,
     component_release_f release_func)
@@ -311,12 +305,19 @@ component_h game_add_component(
     handle_new(&handle, component_new(context->game, entity, release_func));
     array_add(context->game->components, handle);
 
-    return handle;
+    game_context_s new_context = *context;
+    new_context.component = handle;
+    return new_context;
 }
 
-void component_set_data(component_h component, void *data)
+component_h game_get_self(game_context_s *context)
 {
-    component_s *c = handle_get(component);
+    return context->component;
+}
+
+void game_set_component_data(game_context_s *context, void *data)
+{
+    component_s *c = handle_get(context->component);
     assert(c != NULL);
     assert(c->data == NULL);
     c->data = data;
@@ -333,29 +334,27 @@ static void default_buffer_updater(
 
 void game_add_buffer(
     game_context_s *context,
-    component_h owner,
     void *source,
     size_t size,
     void_h *out)
 {
     game_add_buffer_with_updater(
-        context, owner, source, size, default_buffer_updater, out);
+        context, source, size, default_buffer_updater, out);
 }
 
 void game_add_buffer_with_updater(
     game_context_s *context,
-    component_h owner,
     void *source,
     size_t size,
     buffer_updater_f update_function,
     void_h *out)
 {
     buffer_record_s *buffer_record =
-        buffer_record_new(owner, source, size, update_function);
+        buffer_record_new(context->component, source, size, update_function);
 
     array_add(context->game->buffer_records, buffer_record);
     update_function(
-        handle_get(owner)->data,
+        handle_get(context->component)->data,
         handle_get(buffer_record->buffer_handle),
         buffer_record->source,
         size);
@@ -365,7 +364,6 @@ void game_add_buffer_with_updater(
 
 void game_subscribe(
     game_context_s *context,
-    component_h subscriber,
     const char *name,
     void (*handler)())
 {
@@ -373,7 +371,8 @@ void game_subscribe(
     assert(name);
     assert(handler);
 
-    subscription_s *subscription = subscription_new(name, subscriber, handler);
+    subscription_s *subscription =
+        subscription_new(name, context->component, handler);
     array_add(context->game->subscriptions, subscription);
 }
 
@@ -489,7 +488,7 @@ static void game_dispatch_messages(game_s *game)
                 while(broadcast_to < subscription_count &&
                       strcmp(subscription->name, message->name) == 0)
                 {
-                    context.component = handle_get(subscription->subscriber);
+                    context.component = subscription->subscriber;
                     subscription->handler(
                         &context,
                         handle_get(subscription->subscriber)->data,
@@ -522,7 +521,7 @@ static void game_dispatch_messages(game_s *game)
                 if(cmp == 0 && handle_get(subscription->subscriber) ==
                    handle_get(message->to))
                 {
-                    context.component = handle_get(subscription->subscriber);
+                    context.component = subscription->subscriber;
                     subscription->handler(
                         &context,
                         handle_get(subscription->subscriber)->data,
@@ -656,7 +655,7 @@ void game_tick(game_s *game)
     // game_context_s
     game_context_s generic_context;
     generic_context.game = game;
-    generic_context.component = NULL;
+    generic_context.component = null_handle(component_h);
 
     broadcast_tick(&generic_context, 0);
 

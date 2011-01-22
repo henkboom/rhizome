@@ -16,6 +16,13 @@ typedef struct _component_s component_s;
 define_handle_type(entity_h, entity_s);
 define_handle_type(component_h, component_s);
 
+// TODO this shouldn't be here
+struct _game_context_s
+{
+    game_s *game;
+    component_h component;
+};
+
 // callback types
 typedef void (*component_release_f)(
     void *component_data);
@@ -48,24 +55,25 @@ entity_h game_add_entity(game_context_s *context);
 void game_remove_entity(game_context_s *context, entity_h entity);
 
 // game component
-component_h game_add_component(
+game_context_s game_add_component(
     game_context_s *context,
     entity_h entity,
     component_release_f release_func);
 
-void component_set_data(component_h component, void *data);
+component_h game_get_self(game_context_s *context);
+
+// TODO name this better
+void game_set_component_data(game_context_s *context, void *data);
 
 // game buffer
 void game_add_buffer(
     game_context_s *context,
-    component_h owner,
     void *source,
     size_t size,
     void_h *out);
 
 void game_add_buffer_with_updater(
     game_context_s *context,
-    component_h owner,
     void *source,
     size_t size,
     buffer_updater_f update_function,
@@ -74,7 +82,6 @@ void game_add_buffer_with_updater(
 // game messages
 void game_subscribe(
     game_context_s *context,
-    component_h subscriber,
     const char *name,
     message_handler_f handler);
 
@@ -89,10 +96,10 @@ void *game_send_message(
     const char *name,
     size_t len);
 
-#define declare_component(component_name, return_type) \
-    return_type (add_##component_name##_component)( \
+#define declare_component(name, return_type) \
+    return_type (add_##name##_component)( \
         game_context_s *context, entity_h entity); \
-    typedef return_type _component_return_type_##component_name;
+    typedef return_type _component_return_type_##name;
 
 //TODO: figure out how to remove the last line of these next two define* macros
 #define define_message(message_name, content_type) \
@@ -124,21 +131,21 @@ void *game_send_message(
         (game_context_s *context, void *data, const content_type *); \
     static _message_handler_type_##message_name handle_##message_name;
 
-// TODO the context given to init() is the wrong one
-#define begin_component(component_name) \
-    static _component_return_type_##component_name init( \
-        game_context_s *, component_h); \
+#define begin_component(name) \
+    static _component_return_type_##name init( \
+        game_context_s *); \
     static void release(void *); \
-    _component_return_type_##component_name add_##component_name##_component( \
+    _component_return_type_##name add_##name##_component( \
         game_context_s *context, entity_h entity) \
     { \
-        component_h _component = game_add_component(context, entity, release); \
-        _component_return_type_##component_name _ret = init(context, _component); \
+        game_context_s _new_context = \
+            game_add_component(context, entity, release); \
+        _component_return_type_##name _ret = init(&_new_context); \
 
 #define component_subscribe(message_name) \
         _message_handler_type_##message_name *_handler_##message_name = \
             handle_##message_name; \
-        game_subscribe(context, _component, #message_name, \
+        game_subscribe(&_new_context, #message_name, \
             (message_handler_f)_handler_##message_name);
 
 #define end_component() \

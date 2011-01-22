@@ -14,10 +14,10 @@ typedef struct
     transform_h transform;
 } dummy_scene_s;
 
-static component_h init(game_context_s *context, component_h component)
+static component_h init(game_context_s *context)
 {
     dummy_scene_s *dummy_scene = malloc(sizeof(dummy_scene_s));
-    component_set_data(component, dummy_scene);
+    game_set_component_data(context, dummy_scene);
 
     add_input_handler_component(context, game_add_entity(context));
     add_renderer_component(context, game_add_entity(context));
@@ -28,7 +28,7 @@ static component_h init(game_context_s *context, component_h component)
 
     broadcast_renderer_add_sprite(context, dummy_scene->transform);
 
-    return component;
+    return game_get_self(context);
 }
 
 static void release(void *data)

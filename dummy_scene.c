@@ -1,8 +1,10 @@
 #include "dummy_scene.h"
 
 #include "input_handler.h"
+#include "player_input.h"
 #include "renderer.h"
 #include "transform.h"
+#include "vect.h"
 
 begin_component(dummy_scene);
     component_subscribe(tick);
@@ -12,6 +14,7 @@ typedef struct
 {
     entity_h entity;
     transform_h transform;
+    player_input_h player_input;
 } dummy_scene_s;
 
 static component_h init(game_context_s *context)
@@ -25,6 +28,11 @@ static component_h init(game_context_s *context)
     entity_h entity = game_add_entity(context);
     dummy_scene->entity = entity;
     dummy_scene->transform = add_transform_component(context, entity);
+    send_transform_set_pos(
+        context,
+        handle_get(dummy_scene->transform)->component,
+        make_vect(50, 50, 0));
+    dummy_scene->player_input = add_player_input_component(context, entity);
 
     broadcast_renderer_add_sprite(context, dummy_scene->transform);
 
@@ -40,10 +48,10 @@ static void handle_tick(game_context_s *context, void *data, const void **dummy)
 {
     dummy_scene_s *dummy_scene = data;
     const transform_s *transform = handle_get(dummy_scene->transform);
-    if(transform)
+    const player_input_s *player_input = handle_get(dummy_scene->player_input);
+    if(transform && player_input)
     {
-        send_transform_move(context, transform->component, make_vect(1, 1, 0));
-        send_transform_move(context, transform->component, make_vect(0, 1, 0));
+        send_transform_move(context, transform->component, player_input->direction);
 
         if(transform->pos.x > 100)
             game_remove_entity(context, dummy_scene->entity);

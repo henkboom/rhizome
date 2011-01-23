@@ -7,6 +7,13 @@
 
 declare_component(renderer, component_h);
 
-define_broadcast(renderer_add_sprite, transform_h);
+typedef struct {
+    int priority;
+    void (*render)(void *data);
+    void *data;
+} render_job_s;
+define_handle_type(render_job_h, render_job_s);
+
+define_broadcast(renderer_add_job, render_job_h);
 
 #endif

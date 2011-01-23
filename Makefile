@@ -11,6 +11,7 @@ SRC := \
 	handle.c \
 	input_handler.c \
 	main.c \
+	player_input.c \
 	renderer.c \
 	transform.c \
 	vect.c

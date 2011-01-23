@@ -30,7 +30,9 @@ static component_h init(game_context_s *context)
     input_handler_s *input_handler = malloc(sizeof(input_handler_s));
     game_set_component_data(context, input_handler);
 
+    // only get input events when we explicitly ask with glfwPollEvents()
     glfwDisable(GLFW_AUTO_POLL_EVENTS);
+
     glfwSetKeyCallback(key_callback);
 
     return game_get_self(context);

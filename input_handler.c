@@ -18,11 +18,10 @@ static void GLFWCALL key_callback(int key, int action)
 {
     assert(target_context != NULL);
 
-    key_event_s e;
-    e.key = key;
-    e.is_down = action == GLFW_PRESS;
-    broadcast_input_handler_key_event(target_context, e);
-    printf("sent key callback %d %d\n", e.key, e.is_down);
+    key_event_s event;
+    event.key = key;
+    event.is_down = action == GLFW_PRESS;
+    broadcast_input_handler_key_event(target_context, event);
 }
 
 static component_h init(game_context_s *context)

@@ -15,6 +15,7 @@ typedef struct
 
 static handle_slot_s slots[SLOT_COUNT];
 
+//TODO: use a free list for finding handle slots
 static handle_index_t get_free_index()
 {
     static int initted = 0;

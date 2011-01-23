@@ -7,19 +7,19 @@
 
 begin_component(renderer);
     component_subscribe(tick);
-    component_subscribe(renderer_add_sprite);
+    component_subscribe(renderer_add_job);
 end_component();
 
 typedef struct
 {
-    array_of(transform_h) sprites;
+    array_of(render_job_h) render_jobs;
 } renderer_s;
 
 static component_h init(game_context_s *context)
 {
     renderer_s *renderer = malloc(sizeof(renderer_s));
 
-    renderer->sprites = array_new();
+    renderer->render_jobs = array_new();
 
     game_set_component_data(context, renderer);
     return game_get_self(context);
@@ -29,7 +29,7 @@ static void release(void *data)
 {
     renderer_s *renderer = data;
 
-    array_release(renderer->sprites);
+    array_release(renderer->render_jobs);
     free(renderer);
 }
 
@@ -43,7 +43,7 @@ static void handle_tick(game_context_s *context, void *data, const void** dummy)
 {
     renderer_s *renderer = data;
 
-    array_filter(renderer->sprites, is_not_null_handle);
+    array_filter(renderer->render_jobs, is_not_null_handle);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -54,31 +54,24 @@ static void handle_tick(game_context_s *context, void *data, const void** dummy)
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
     glColor3d(1, 1, 1);
-    glBegin(GL_POINTS);
-    int i;
-    for(i = 0; i < array_length(renderer->sprites); i++)
+
+    for(int i = 0; i < array_length(renderer->render_jobs); i++)
     {
-        const transform_s *transform =
-            handle_get(array_get(renderer->sprites, i));
-        if(transform)
-        {
-            //printf("%f, %f\n", transform->pos.x, transform->pos.y);
-            glVertex3d(transform->pos.x, transform->pos.y, 0);
-        }
+        const render_job_s *render_job =
+            handle_get(array_get(renderer->render_jobs, i));
+        render_job->render(render_job);
     }
-    glEnd();
 
     glfwSwapBuffers();
 }
 
-static void handle_renderer_add_sprite(
+static void handle_renderer_add_job(
     game_context_s *context,
     void *data,
-    const transform_h *sprite)
+    const render_job_h *render_job)
 {
     renderer_s *renderer = data;
-    array_add(renderer->sprites, *sprite);
+    array_add(renderer->render_jobs, *render_job);
 }
 

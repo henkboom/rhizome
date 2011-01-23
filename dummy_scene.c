@@ -3,6 +3,7 @@
 #include "input_handler.h"
 #include "player_input.h"
 #include "renderer.h"
+#include "sprite.h"
 #include "transform.h"
 #include "vect.h"
 
@@ -34,7 +35,8 @@ static component_h init(game_context_s *context)
         make_vect(50, 50, 0));
     dummy_scene->player_input = add_player_input_component(context, entity);
 
-    broadcast_renderer_add_sprite(context, dummy_scene->transform);
+    component_h sprite = add_sprite_component(context, entity);
+    send_sprite_track_transform(context, sprite, dummy_scene->transform);
 
     return game_get_self(context);
 }

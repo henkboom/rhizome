@@ -13,6 +13,7 @@ SRC := \
 	main.c \
 	player_input.c \
 	renderer.c \
+	sprite.c \
 	transform.c \
 	vect.c
 OBJS := $(SRC:.c=.o)

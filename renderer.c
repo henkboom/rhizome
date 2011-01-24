@@ -49,7 +49,7 @@ static void handle_tick(game_context_s *context, void *data, const void** dummy)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, 640, 0, 480, 1, -1);
+    glOrtho(0, 640, 0, 480, 1000, -1000);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);

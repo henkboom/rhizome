@@ -53,7 +53,12 @@ static void handle_tick(game_context_s *context, void *data, const void **dummy)
     const player_input_s *player_input = handle_get(dummy_scene->player_input);
     if(transform && player_input)
     {
-        send_transform_move(context, transform->component, player_input->direction);
+        send_transform_move(context, transform->component,
+            player_input->direction);
+        send_transform_rotate(context, transform->component,
+            make_quaternion_rotation(
+                vect_normalize(make_vect(1, 1, 1)),
+                0.01));
 
         if(transform->pos.x > 100)
             game_remove_entity(context, dummy_scene->entity);

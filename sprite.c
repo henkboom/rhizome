@@ -44,6 +44,11 @@ static void handle_sprite_track_transform(
     sprite->transform = *transform;
 }
 
+static void draw_vect(vect_s v)
+{
+    glVertex3d(v.x, v.y, v.z);
+}
+
 static void render(const render_job_s *data)
 {
     sprite_s *sprite = (sprite_s *)data;
@@ -51,8 +56,22 @@ static void render(const render_job_s *data)
 
     if(transform)
     {
-        glBegin(GL_POINTS);
-        glVertex3d(transform->pos.x, transform->pos.y, 0);
+        vect_s i = quaternion_rotate_i(transform->orientation);
+        vect_s j = quaternion_rotate_j(transform->orientation);
+        vect_s k = quaternion_rotate_k(transform->orientation);
+
+        glBegin(GL_LINES);
+            glColor3d(1, 0, 0);
+            draw_vect(transform->pos);
+            draw_vect(vect_add(transform->pos, vect_mul(i, 40)));
+            glColor3d(0, 1, 0);
+            draw_vect(transform->pos);
+            draw_vect(vect_add(transform->pos, vect_mul(j, 40)));
+            glColor3d(0, 0, 1);
+            draw_vect(transform->pos);
+            draw_vect(vect_add(transform->pos, vect_mul(k, 40)));
         glEnd();
+
+        glColor3d(1, 1, 1);
     }
 }

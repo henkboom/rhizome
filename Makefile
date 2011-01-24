@@ -2,6 +2,8 @@ TARGET_EXE := rhizome
 CFLAGS := -Wall -g -O0 -std=c99
 LDFLAGS := -lglfw -lGL -lGLU -lm
 
+BUILD_DIR := build
+
 CC := clang
 
 SRC := \
@@ -12,24 +14,26 @@ SRC := \
 	input_handler.c \
 	main.c \
 	player_input.c \
+	quaternion.c \
 	renderer.c \
 	sprite.c \
 	transform.c \
 	vect.c
-OBJS := $(SRC:.c=.o)
-DEPS := $(SRC:.c=.P)
+OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC))
+DEPS := $(patsubst %.c, $(BUILD_DIR)/%.P, $(SRC))
 
 $(TARGET_EXE): $(OBJS)
 	@echo linking $@...
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c
 	@echo building $@...
+	@mkdir -p $(BUILD_DIR)
 	@$(CC) -MD -o $@ $< -c $(CFLAGS)
-	@cp $*.d $*.P;
+	@cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P;
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	     -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P
-	@rm -f $*.d
+	     -e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P
+	@rm -f $(BUILD_DIR)/$*.d
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(TARGET_EXE)

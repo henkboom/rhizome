@@ -10,10 +10,8 @@
 // basic types
 typedef struct _game_s game_s;
 typedef struct _game_context_s game_context_s;
-typedef struct _entity_s entity_s;
 typedef struct _component_s component_s;
 
-define_handle_type(entity_h, entity_s);
 define_handle_type(component_h, component_s);
 
 // TODO this shouldn't be here
@@ -40,7 +38,7 @@ typedef void (*message_handler_f)(
 
 typedef component_h (*initial_component_f)(
     game_context_s *context,
-    entity_h entity);
+    component_h parent);
 
 //// External Interface ///////////////////////////////////////////////////////
 
@@ -50,15 +48,13 @@ void game_tick(game_s *game);
 
 //// Internal (Component) Interface ///////////////////////////////////////////
 
-// game entity
-entity_h game_add_entity(game_context_s *context);
-void game_remove_entity(game_context_s *context, entity_h entity);
-
 // game component
 game_context_s game_add_component(
     game_context_s *context,
-    entity_h entity,
+    component_h parent,
     component_release_f release_func);
+
+void game_remove_component(game_context_s *context, component_h component);
 
 component_h game_get_self(game_context_s *context);
 
@@ -97,7 +93,7 @@ void *game_send_message(
 
 #define declare_component(name, return_type) \
     return_type (add_##name##_component)( \
-        game_context_s *context, entity_h entity); \
+        game_context_s *context, component_h parent); \
     typedef return_type _component_return_type_##name;
 
 //TODO: figure out how to remove the last line of these next two define* macros
@@ -135,10 +131,10 @@ void *game_send_message(
         game_context_s *); \
     static void release(void *); \
     _component_return_type_##name add_##name##_component( \
-        game_context_s *context, entity_h entity) \
+        game_context_s *context, component_h parent) \
     { \
         game_context_s _new_context = \
-            game_add_component(context, entity, release); \
+            game_add_component(context, parent, release); \
         _component_return_type_##name _ret = init(&_new_context); \
 
 #define component_subscribe(message_name) \

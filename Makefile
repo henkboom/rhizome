@@ -10,6 +10,7 @@ SRC := \
 	array.c \
 	dummy_scene.c \
 	game.c \
+	group.c \
 	handle.c \
 	input_handler.c \
 	main.c \

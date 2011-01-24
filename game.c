@@ -12,17 +12,14 @@ typedef struct _message_s message_s;
 typedef struct _subscription_s subscription_s;
 typedef struct _buffer_record_s buffer_record_s;
 
-typedef long long unsigned int entity_id_t;
 typedef long long unsigned int component_id_t;
 
 struct _game_s
 {
-    entity_id_t next_entity_id;
-    array_of(entity_h) entities;
-    array_of(entity_h) entities_to_remove;
 
     component_id_t next_component_id;
     array_of(component_h) components;
+    array_of(component_h) components_to_remove;
 
     array_of(buffer_record_s *) buffer_records;
 
@@ -30,34 +27,14 @@ struct _game_s
     array_of(subscription_s *) subscriptions;
 };
 
-static void internal_game_remove_entity(game_s *game, entity_h entity);
+static void internal_game_remove_component(game_s *game, component_h component);
 static void game_handle_removals(game_s *game);
-
-//// Entity ///////////////////////////////////////////////////////////////////
-
-struct _entity_s
-{
-    entity_id_t id;
-};
-
-static entity_s * entity_new(entity_id_t id)
-{
-    entity_s *entity = malloc(sizeof(entity));
-    entity->id = id;
-
-    return entity;
-}
-
-static void entity_release(entity_s *entity)
-{
-    free(entity);
-}
 
 //// Component Data ///////////////////////////////////////////////////////////
 
 struct _component_s
 {
-    entity_h entity;
+    component_h parent;
     component_id_t id;
     component_release_f release_func;
     void *data;
@@ -65,14 +42,13 @@ struct _component_s
 
 static component_s * component_new(
     game_s *game,
-    entity_h entity,
+    component_h parent,
     component_release_f release_func)
 {
     assert(game);
-    assert(handle_live(entity));
 
     component_s *component = malloc(sizeof(component_s));
-    component->entity = entity;
+    component->parent = parent;
     component->id = game->next_component_id++;
     component->release_func = release_func;
     component->data = NULL;
@@ -209,14 +185,10 @@ game_s * game_new(initial_component_f init)
 {
     game_s *game = malloc(sizeof(game_s));
 
-    // 0 is the null entity
-    game->next_entity_id = 1;
-    game->entities = array_new();
-    game->entities_to_remove = array_new();
 
-    // 0 is the null component
-    game->next_component_id = 1;
+    game->next_component_id = 0;
     game->components = array_new();
+    game->components_to_remove = array_new();
 
     game->buffer_records = array_new();
 
@@ -227,7 +199,7 @@ game_s * game_new(initial_component_f init)
     generic_context.game = game;
     generic_context.component = null_handle(component_h);
 
-    init(&generic_context, game_add_entity(&generic_context));
+    init(&generic_context, null_handle(component_h));
 
     return game;
 }
@@ -237,19 +209,16 @@ void game_release(game_s *game)
     assert(game);
 
     int i;
-    for(i = 0; i < array_length(game->entities); i++)
+    for(i = 0; i < array_length(game->components); i++)
     {
-        internal_game_remove_entity(game, array_get(game->entities, i));
+        internal_game_remove_component(game, array_get(game->components, i));
     }
     game_handle_removals(game);
 
-    assert(array_length(game->entities) == 0);
-    array_release(game->entities);
-
-    array_release(game->entities_to_remove);
-
     assert(array_length(game->components) == 0);
     array_release(game->components);
+
+    array_release(game->components_to_remove);
 
     assert(array_length(game->buffer_records) == 0);
     array_release(game->buffer_records);
@@ -264,43 +233,31 @@ void game_release(game_s *game)
     free(game);
 }
 
-entity_h game_add_entity(game_context_s *context)
-{
-    assert(context);
-
-    entity_h handle;
-    handle_new(&handle, entity_new(context->game->next_entity_id++));
-    array_add(context->game->entities, handle);
-
-    return handle;
-}
-
-static void internal_game_remove_entity(game_s *game, entity_h entity)
+static void internal_game_remove_component(game_s *game, component_h component)
 {
     assert(game);
-    assert(handle_live(entity));
+    assert(handle_live(component));
 
-    array_add(game->entities_to_remove, entity);
+    array_add(game->components_to_remove, component);
 }
 
-void game_remove_entity(game_context_s *context, entity_h entity)
+void game_remove_component(game_context_s *context, component_h component)
 {
     assert(context);
-    assert(handle_live(entity));
+    assert(handle_live(component));
 
-    internal_game_remove_entity(context->game, entity);
+    internal_game_remove_component(context->game, component);
 }
 
 game_context_s game_add_component(
     game_context_s *context,
-    entity_h entity,
+    component_h parent,
     component_release_f release_func)
 {
     assert(context);
-    assert(handle_live(entity));
 
     component_h handle;
-    handle_new(&handle, component_new(context->game, entity, release_func));
+    handle_new(&handle, component_new(context->game, parent, release_func));
     array_add(context->game->components, handle);
 
     game_context_s new_context = *context;
@@ -558,31 +515,31 @@ static void game_handle_removals(game_s *game)
 {
     int i;
 
-    while(array_length(game->entities_to_remove) > 0)
+    while(array_length(game->components_to_remove) > 0)
     {
-        // remove dead entities
-        for(i = 0; i < array_length(game->entities_to_remove); i++)
+        // remove
+        for(i = 0; i < array_length(game->components_to_remove); i++)
         {
-            entity_h handle = array_get(game->entities_to_remove, i);
-            entity_s *entity = handle_get(handle);
-            if(entity != NULL)
+            component_h handle = array_get(game->components_to_remove, i);
+            component_s *component = handle_get(handle);
+            if(component != NULL)
             {
-                entity_release(entity);
+                component_release(component);
                 handle_release(handle);
-                //printf("removed entity\n");
             }
         }
-        array_set_length(game->entities_to_remove, 0);
-        //printf("before: %lu entities\n", array_length(game->entities));
-        array_filter(game->entities, is_not_null_handle);
-        //printf("after: %lu entities\n", array_length(game->entities));
-
-        // remove dead components
-        for(i = 0; i < array_length(game->components); i++)
+        array_set_length(game->components_to_remove, 0);
+        // remove children
+        //
+        // This code relies on the fact that children always come after their
+        // parents in the components list. TODO: assert this
+        //
+        // Skip the first element, since it is the root.
+        for(i = 1; i < array_length(game->components); i++)
         {
             component_h handle = array_get(game->components, i);
             component_s *component = handle_get(handle);
-            if(handle_get(component->entity) == NULL)
+            if(component && handle_get(component->parent) == NULL)
             {
                 if(component->release_func != NULL)
                 {
@@ -590,12 +547,9 @@ static void game_handle_removals(game_s *game)
                 }
                 component_release(component);
                 handle_release(handle);
-                //printf("removed component\n");
             }
         }
-        //printf("before: %lu components\n", array_length(game->components));
         array_filter(game->components, is_not_null_handle);
-        //printf("after: %lu components\n", array_length(game->components));
 
         for(i = 0; i < array_length(game->buffer_records); i++)
         {
@@ -604,12 +558,9 @@ static void game_handle_removals(game_s *game)
             {
                 buffer_record_release(record);
                 array_set(game->buffer_records, i, NULL);
-                //printf("removed buffer\n");
             }
         }
-        //printf("before: %lu buffers\n", array_length(game->buffer_records));
         array_filter(game->buffer_records, is_not_null_pointer);
-        //printf("after: %lu buffers\n", array_length(game->buffer_records));
 
         for(i = 0; i < array_length(game->subscriptions); i++)
         {
@@ -618,12 +569,9 @@ static void game_handle_removals(game_s *game)
             {
                 subscription_release(subscription);
                 array_set(game->subscriptions, i, NULL);
-                //printf("removed subscription\n");
             }
         }
-        //printf("before: %lu subs\n", array_length(game->subscriptions));
         array_filter(game->subscriptions, is_not_null_pointer);
-        //printf("after: %lu subs\n", array_length(game->subscriptions));
     }
 }
 

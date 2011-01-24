@@ -1,5 +1,6 @@
 #include "dummy_scene.h"
 
+#include "group.h"
 #include "input_handler.h"
 #include "player_input.h"
 #include "renderer.h"
@@ -13,32 +14,34 @@ end_component();
 
 typedef struct
 {
-    entity_h entity;
+    component_h group;
     transform_h transform;
     player_input_h player_input;
 } dummy_scene_s;
 
 static component_h init(game_context_s *context)
 {
+    component_h self = game_get_self(context);
     dummy_scene_s *dummy_scene = malloc(sizeof(dummy_scene_s));
     game_set_component_data(context, dummy_scene);
 
-    add_input_handler_component(context, game_add_entity(context));
-    add_renderer_component(context, game_add_entity(context));
+    add_input_handler_component(context, self);
+    add_renderer_component(context, self);
 
-    entity_h entity = game_add_entity(context);
-    dummy_scene->entity = entity;
-    dummy_scene->transform = add_transform_component(context, entity);
+    dummy_scene->group = add_group_component(context, self);
+    dummy_scene->transform =
+        add_transform_component(context, dummy_scene->group);
     send_transform_set_pos(
         context,
         handle_get(dummy_scene->transform)->component,
         make_vect(50, 50, 0));
-    dummy_scene->player_input = add_player_input_component(context, entity);
+    dummy_scene->player_input =
+        add_player_input_component(context, dummy_scene->group);
 
-    component_h sprite = add_sprite_component(context, entity);
+    component_h sprite = add_sprite_component(context, dummy_scene->group);
     send_sprite_track_transform(context, sprite, dummy_scene->transform);
 
-    return game_get_self(context);
+    return self;
 }
 
 static void release(void *data)
@@ -61,6 +64,6 @@ static void handle_tick(game_context_s *context, void *data, const void **dummy)
                 0.01));
 
         if(transform->pos.x > 100)
-            game_remove_entity(context, dummy_scene->entity);
+            game_remove_component(context, dummy_scene->group);
     }
 }

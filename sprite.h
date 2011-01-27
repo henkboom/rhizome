@@ -1,5 +1,5 @@
-#ifndef SPRITE_H
-#define SPRITE_H
+#ifndef RHIZOME__SPRITE_H
+#define RHIZOME__SPRITE_H
 
 #include "game.h"
 #include "transform.h"

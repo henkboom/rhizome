@@ -8,6 +8,7 @@ SRC += \
 	$(RHIZOME_PREFIX)/group.c \
 	$(RHIZOME_PREFIX)/handle.c \
 	$(RHIZOME_PREFIX)/input_handler.c \
+	$(RHIZOME_PREFIX)/main_loop.c \
 	$(RHIZOME_PREFIX)/player_input.c \
 	$(RHIZOME_PREFIX)/quaternion.c \
 	$(RHIZOME_PREFIX)/renderer.c \

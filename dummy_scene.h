@@ -1,5 +1,5 @@
-#ifndef DUMMY_SCENE_H
-#define DUMMY_SCENE_H
+#ifndef RHIZOME__DUMMY_SCENE_H
+#define RHIZOME__DUMMY_SCENE_H
 
 #include "game.h"
 

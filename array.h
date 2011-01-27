@@ -1,5 +1,5 @@
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef RHIZOME__ARRAY_H
+#define RHIZOME__ARRAY_H
 
 #include <stdlib.h>
 

@@ -1,5 +1,5 @@
-#ifndef PLAYER_INPUT_H
-#define PLAYER_INPUT_H
+#ifndef RHIZOME__PLAYER_INPUT_H
+#define RHIZOME__PLAYER_INPUT_H
 
 #include "game.h"
 #include "vect.h"

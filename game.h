@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef RHIZOME__GAME_H
+#define RHIZOME__GAME_H
 
 #include <stdlib.h>
 

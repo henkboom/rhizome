@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef RHIZOME__RENDERER_H
+#define RHIZOME__RENDERER_H
 
 #include "game.h"
 #include "transform.h"

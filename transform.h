@@ -1,5 +1,5 @@
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef RHIZOME__TRANSFORM_H
+#define RHIZOME__TRANSFORM_H
 
 #include "game.h"
 #include "handle.h"

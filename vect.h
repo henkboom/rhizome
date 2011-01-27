@@ -1,5 +1,5 @@
-#ifndef VECT_H
-#define VECT_H
+#ifndef RHIZOME__VECT_H
+#define RHIZOME__VECT_H
 
 typedef struct {
     double x;

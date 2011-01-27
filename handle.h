@@ -1,5 +1,5 @@
-#ifndef HANDLE_H
-#define HANDLE_H
+#ifndef RHIZOME__HANDLE_H
+#define RHIZOME__HANDLE_H
 
 typedef long long unsigned int handle_id_t;
 typedef long long unsigned int handle_index_t;

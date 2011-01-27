@@ -1,5 +1,5 @@
-#ifndef QUATERNION_H
-#define QUATERNION_H
+#ifndef RHIZOME__QUATERNION_H
+#define RHIZOME__QUATERNION_H
 
 #include "vect.h"
 

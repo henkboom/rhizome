@@ -1,5 +1,5 @@
-#ifndef INPUT_HANDLER_H
-#define INPUT_HANDLER_H
+#ifndef RHIZOME__INPUT_HANDLER_H
+#define RHIZOME__INPUT_HANDLER_H
 
 #include "game.h"
 

@@ -1,5 +1,5 @@
-#ifndef GROUP_H
-#define GROUP_H
+#ifndef RHIZOME__GROUP_H
+#define RHIZOME__GROUP_H
 
 #include "game.h"
 

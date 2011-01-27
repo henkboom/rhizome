@@ -12,7 +12,6 @@ quaternion_s quaternion_normalize(quaternion_s q)
     double sqrmag = quaternion_sqrmag(q);
     if(fabs(quaternion_sqrmag(q) - 1.0) > 0.000001)
     {
-        exit(0);
         double mag = sqrt(sqrmag);
         return make_quaternion(q.w/mag, q.x/mag, q.y/mag, q.z/mag);
     }

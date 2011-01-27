@@ -6,20 +6,12 @@ BUILD_DIR := build
 
 CC := clang
 
-SRC := \
-	array.c \
-	dummy_scene.c \
-	game.c \
-	group.c \
-	handle.c \
-	input_handler.c \
-	main.c \
-	player_input.c \
-	quaternion.c \
-	renderer.c \
-	sprite.c \
-	transform.c \
-	vect.c
+SRC :=
+PACKAGES :=
+
+include project.mk
+include $(PACKAGES:%=%/package.mk)
+
 OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC))
 DEPS := $(patsubst %.c, $(BUILD_DIR)/%.P, $(SRC))
 
@@ -29,7 +21,7 @@ $(TARGET_EXE): $(OBJS)
 
 $(BUILD_DIR)/%.o: %.c
 	@echo building $@...
-	@mkdir -p $(BUILD_DIR)
+	@mkdir -p `dirname $@`
 	@$(CC) -MD -o $@ $< -c $(CFLAGS)
 	@cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P;
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \

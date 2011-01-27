@@ -1,16 +1,15 @@
-TARGET_EXE := rhizome
-CFLAGS := -Wall -g -O0 -std=c99
-LDFLAGS := -lglfw -lGL -lGLU -lm
-
 BUILD_DIR := build
-
 CC := clang
 
 SRC :=
 PACKAGES :=
+CFLAGS := -Wall -g -O0 -std=c99
+LDFLAGS := -lglfw -lGL -lGLU -lm
 
 include project.mk
 include $(PACKAGES:%=%/package.mk)
+
+TARGET_EXE := $(PROJECT_NAME)
 
 OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC))
 DEPS := $(patsubst %.c, $(BUILD_DIR)/%.P, $(SRC))

@@ -55,7 +55,8 @@ static void handle_transform_rotate(
 {
     transform_s *transform = data;
 
-    transform->orientation = quaternion_normalize(quaternion_mul(transform->orientation, *rotation));
+    transform->orientation = quaternion_normalize(
+        quaternion_mul(transform->orientation, *rotation));
 }
 
 static void handle_transform_set_orientation(

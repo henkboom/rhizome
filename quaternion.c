@@ -23,12 +23,11 @@ quaternion_s quaternion_normalize(quaternion_s q)
 
 quaternion_s make_quaternion_rotation(vect_s axis, double angle)
 {
-    double sin_angle = sin(angle);
-    double cos_angle = cos(angle);
+    double s = sin(angle/2);
+    double c = cos(angle/2);
     return make_quaternion(
-        cos_angle,
-        sin_angle * axis.x,
-        sin_angle * axis.y,
-        sin_angle * axis.z);
+        c,
+        s * axis.x,
+        s * axis.y,
+        s * axis.z);
 }
-

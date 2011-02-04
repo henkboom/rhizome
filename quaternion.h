@@ -58,23 +58,23 @@ static inline vect_s quaternion_rotate_i(quaternion_s q)
 {
     return make_vect(
         1 - 2*(q.y*q.y + q.z*q.z),
-        2*(q.x*q.y - q.z*q.w),
-        2*(q.x*q.z + q.y*q.w));
+        2*(q.x*q.y + q.z*q.w),
+        2*(q.x*q.z - q.y*q.w));
 }
 
 static inline vect_s quaternion_rotate_j(quaternion_s q)
 {
     return make_vect(
-        2*(q.x*q.y + q.z*q.w),
+        2*(q.x*q.y - q.z*q.w),
         1 - 2*(q.x*q.x + q.z*q.z),
-        2*(q.y*q.z - q.x*q.w));
+        2*(q.y*q.z + q.x*q.w));
 }
 
 static inline vect_s quaternion_rotate_k(quaternion_s q)
 {
     return make_vect(
-        2*(q.x*q.z - q.y*q.w),
-        2*(q.y*q.z + q.x*q.w),
+        2*(q.x*q.z + q.y*q.w),
+        2*(q.y*q.z - q.x*q.w),
         1 - 2*(q.x*q.x + q.y*q.y));
 }
 

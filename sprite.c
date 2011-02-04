@@ -12,7 +12,7 @@ typedef struct {
     transform_h transform;
 } sprite_s;
 
-static void render(const render_job_s *data);
+static void render(const render_context_s *context, const render_job_s *data);
 
 static component_h init(game_context_s *context)
 {
@@ -49,7 +49,7 @@ static void draw_vect(vect_s v)
     glVertex3d(v.x, v.y, v.z);
 }
 
-static void render(const render_job_s *data)
+static void render(const render_context_s *context, const render_job_s *data)
 {
     sprite_s *sprite = (sprite_s *)data;
     const transform_s *transform = handle_get(sprite->transform);
@@ -63,13 +63,13 @@ static void render(const render_job_s *data)
         glBegin(GL_LINES);
             glColor3d(1, 0, 0);
             draw_vect(transform->pos);
-            draw_vect(vect_add(transform->pos, vect_mul(i, 40)));
+            draw_vect(vect_add(transform->pos, vect_mul(i, 1)));
             glColor3d(0, 1, 0);
             draw_vect(transform->pos);
-            draw_vect(vect_add(transform->pos, vect_mul(j, 40)));
+            draw_vect(vect_add(transform->pos, vect_mul(j, 1)));
             glColor3d(0, 0, 1);
             draw_vect(transform->pos);
-            draw_vect(vect_add(transform->pos, vect_mul(k, 40)));
+            draw_vect(vect_add(transform->pos, vect_mul(k, 1)));
         glEnd();
 
         glColor3d(1, 1, 1);

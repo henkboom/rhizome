@@ -5,11 +5,20 @@
 
 declare_component(input_handler, component_h);
 
+// key event
 typedef struct {
     int key;
     int is_down;
 } key_event_s;
 
 define_broadcast(input_handler_key_event, key_event_s);
+
+// window resize event
+typedef struct {
+    int width;
+    int height;
+} resize_event_s;
+
+define_broadcast(input_handler_resize_event, resize_event_s);
 
 #endif

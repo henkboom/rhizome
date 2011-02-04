@@ -7,8 +7,15 @@
 
 declare_component(renderer, component_h);
 
+typedef struct {
+    int width;
+    int height;
+} render_context_s;
+
 struct _render_job_s {
-    void (*render)(const struct _render_job_s *data);
+    void (*render)(
+        const render_context_s *context,
+        const struct _render_job_s *data);
 };
 typedef struct _render_job_s render_job_s;
 define_handle_type(render_job_h, const render_job_s);

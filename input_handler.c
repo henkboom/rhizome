@@ -24,6 +24,16 @@ static void GLFWCALL key_callback(int key, int action)
     broadcast_input_handler_key_event(target_context, event);
 }
 
+static void GLFWCALL window_size_callback(int width, int height)
+{
+    assert(target_context != NULL);
+
+    resize_event_s event;
+    event.width = (width < 1) ? 1 : width;
+    event.height = (height < 1) ? 1 : height;
+    broadcast_input_handler_resize_event(target_context, event);
+}
+
 static component_h init(game_context_s *context)
 {
     input_handler_s *input_handler = malloc(sizeof(input_handler_s));
@@ -32,7 +42,12 @@ static component_h init(game_context_s *context)
     // only get input events when we explicitly ask with glfwPollEvents()
     glfwDisable(GLFW_AUTO_POLL_EVENTS);
 
+    // set the callbacks. actually the callbacks might be called on setting
+    // right now, particularly the window size one.
+    target_context = context;
     glfwSetKeyCallback(key_callback);
+    glfwSetWindowSizeCallback(window_size_callback);
+    target_context = NULL;
 
     return game_get_self(context);
 }

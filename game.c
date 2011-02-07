@@ -233,6 +233,11 @@ void game_release(game_s *game)
     free(game);
 }
 
+int game_done(game_s *game)
+{
+    return array_length(game->components) == 0;
+}
+
 static void internal_game_remove_component(game_s *game, component_h component)
 {
     assert(game);
@@ -592,6 +597,8 @@ static void game_update_buffers(game_s *game)
     }
 }
 
+//// Tick ////
+
 void game_tick(game_s *game)
 {
     assert(game);
@@ -600,7 +607,7 @@ void game_tick(game_s *game)
     generic_context.game = game;
     generic_context.component = null_handle(component_h);
 
-    broadcast_tick(&generic_context, 0);
+    broadcast_tick(&generic_context, nothing);
 
     while(array_length(game->messages) != 0)
     {

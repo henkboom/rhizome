@@ -29,7 +29,7 @@ static void main_loop(game_s *game)
     const double update_interval = 1.0/60;
     double next_update_time = glfwGetTime();
 
-    while(1)
+    while(!game_done(game))
     {
         next_update_time += update_interval;
         wait_until(next_update_time);
@@ -49,5 +49,7 @@ void enter_main_loop(initial_component_f initial_component)
     main_loop(game);
 
     game_release(game);
+
+    glfwTerminate();
 }
 

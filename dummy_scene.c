@@ -49,7 +49,7 @@ static void release(void *data)
     free(data);
 }
 
-static void handle_tick(game_context_s *context, void *data, const void **dummy)
+static void handle_tick(game_context_s *context, void *data, const nothing *n)
 {
     dummy_scene_s *dummy_scene = data;
     const transform_s *transform = handle_get(dummy_scene->transform);

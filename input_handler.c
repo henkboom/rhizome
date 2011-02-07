@@ -34,6 +34,15 @@ static void GLFWCALL window_size_callback(int width, int height)
     broadcast_input_handler_resize_event(target_context, event);
 }
 
+static int GLFWCALL window_close_callback()
+{
+    assert(target_context != NULL);
+
+    broadcast_input_handler_close_event(target_context, nothing);
+
+    return GL_FALSE;
+}
+
 static component_h init(game_context_s *context)
 {
     input_handler_s *input_handler = malloc(sizeof(input_handler_s));
@@ -47,6 +56,7 @@ static component_h init(game_context_s *context)
     target_context = context;
     glfwSetKeyCallback(key_callback);
     glfwSetWindowSizeCallback(window_size_callback);
+    glfwSetWindowCloseCallback(window_close_callback);
     target_context = NULL;
 
     return game_get_self(context);
@@ -57,7 +67,7 @@ static void release(void *data)
     free(data);
 }
 
-static void handle_tick(game_context_s *context, void *data, const void **dummy)
+static void handle_tick(game_context_s *context, void *data, const nothing_s *n)
 {
     target_context = context;
     glfwPollEvents();

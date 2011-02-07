@@ -45,7 +45,7 @@ static int is_not_null_handle(void *value)
 }
 
 
-static void handle_tick(game_context_s *context, void *data, const void** dummy)
+static void handle_tick(game_context_s *context, void *data, const nothing_s *n)
 {
     renderer_s *renderer = data;
 

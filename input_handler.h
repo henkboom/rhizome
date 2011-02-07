@@ -21,4 +21,7 @@ typedef struct {
 
 define_broadcast(input_handler_resize_event, resize_event_s);
 
+// window close event
+define_broadcast(input_handler_close_event, nothing_s);
+
 #endif

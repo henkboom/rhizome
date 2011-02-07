@@ -40,10 +40,14 @@ typedef component_h (*initial_component_f)(
     game_context_s *context,
     component_h parent);
 
+typedef struct {} nothing_s;
+nothing_s nothing;
+
 //// External Interface ///////////////////////////////////////////////////////
 
 game_s * game_new(initial_component_f init);
 void game_release(game_s *game);
+int game_done(game_s *game);
 void game_tick(game_s *game);
 
 //// Internal (Component) Interface ///////////////////////////////////////////
@@ -147,7 +151,6 @@ void *game_send_message(
         return _ret; \
     }
 
-// TODO: void *?
-define_broadcast(tick, void *);
+define_broadcast(tick, nothing_s);
 
 #endif

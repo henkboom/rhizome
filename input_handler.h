@@ -3,7 +3,9 @@
 
 #include "game.h"
 
-declare_component(input_handler, component_h);
+component_h add_input_handler_component(
+    game_context_s *context,
+    component_h parent);
 
 // key event
 typedef struct {

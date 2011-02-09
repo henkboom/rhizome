@@ -4,10 +4,6 @@
 
 #include "input_handler.h"
 
-begin_component(player_input);
-    component_subscribe(input_handler_key_event)
-end_component();
-
 typedef struct {
     player_input_s out;
     int left;
@@ -16,8 +12,14 @@ typedef struct {
     int down;
 } player_input_data_s;
 
-static player_input_h init(game_context_s *context)
+player_input_h add_player_input_component(
+    game_context_s *context,
+    component_h parent)
 {
+    context = game_add_component(context, parent, release_component);
+
+    component_subscribe(context, input_handler_key_event);
+
     player_input_data_s *input = malloc(sizeof(player_input_data_s));
     game_set_component_data(context, input);
 
@@ -33,7 +35,7 @@ static player_input_h init(game_context_s *context)
     return handle;
 }
 
-static void release(void *data)
+static void release_component(void *data)
 {
     free(data);
 }

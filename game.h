@@ -14,13 +14,6 @@ typedef struct _component_s component_s;
 
 define_handle_type(component_h, component_s);
 
-// TODO this shouldn't be here
-struct _game_context_s
-{
-    game_s *game;
-    component_h component;
-};
-
 // callback types
 typedef void (*component_release_f)(
     void *component_data);
@@ -53,7 +46,7 @@ void game_tick(game_s *game);
 //// Internal (Component) Interface ///////////////////////////////////////////
 
 // game component
-game_context_s game_add_component(
+game_context_s * game_add_component(
     game_context_s *context,
     component_h parent,
     component_release_f release_func);
@@ -95,10 +88,8 @@ void *game_send_message(
     const char *name,
     size_t len);
 
-#define declare_component(name, return_type) \
-    return_type (add_##name##_component)( \
-        game_context_s *context, component_h parent); \
-    typedef return_type _component_return_type_##name;
+//TODO: figure out how to get rid of this nicely
+static void release_component(void *);
 
 //TODO: figure out how to remove the last line of these next two define* macros
 #define define_message(message_name, content_type) \
@@ -130,26 +121,11 @@ void *game_send_message(
         (game_context_s *context, void *data, const content_type *); \
     static _message_handler_type_##message_name handle_##message_name;
 
-#define begin_component(name) \
-    static _component_return_type_##name init( \
-        game_context_s *); \
-    static void release(void *); \
-    _component_return_type_##name add_##name##_component( \
-        game_context_s *context, component_h parent) \
-    { \
-        game_context_s _new_context = \
-            game_add_component(context, parent, release); \
-        _component_return_type_##name _ret = init(&_new_context); \
-
-#define component_subscribe(message_name) \
+#define component_subscribe(context, message_name) \
         _message_handler_type_##message_name *_handler_##message_name = \
             handle_##message_name; \
-        game_subscribe(&_new_context, #message_name, \
+        game_subscribe(context, #message_name, \
             (message_handler_f)_handler_##message_name);
-
-#define end_component() \
-        return _ret; \
-    }
 
 define_broadcast(tick, nothing_s);
 

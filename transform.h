@@ -11,10 +11,13 @@ typedef struct {
     vect_s pos;
     quaternion_s orientation;
 } transform_s;
-
 define_handle_type(transform_h, const transform_s);
 
-declare_component(transform, transform_h);
+transform_h add_transform_component(
+    game_context_s *context,
+    component_h parent,
+    vect_s pos,
+    quaternion_s orientation);
 
 define_message(transform_move, vect_s);
 define_message(transform_set_pos, vect_s);

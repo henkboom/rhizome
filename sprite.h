@@ -4,7 +4,7 @@
 #include "game.h"
 #include "transform.h"
 
-declare_component(sprite, component_h);
+component_h add_sprite_component(game_context_s *context, component_h parent);
 
 define_message(sprite_track_transform, transform_h);
 

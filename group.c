@@ -1,14 +1,13 @@
 #include "group.h"
 
-begin_component(group);
-end_component();
 
-component_h init(game_context_s *context)
+component_h add_group_component(game_context_s *context, component_h parent)
 {
+    context = game_add_component(context, parent, release_component);
     return game_get_self(context);
 }
 
-void release(void *data)
+void release_component(void *data)
 {
     // do nothing
 }

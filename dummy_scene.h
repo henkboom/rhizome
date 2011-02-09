@@ -3,6 +3,8 @@
 
 #include "game.h"
 
-declare_component(dummy_scene, component_h);
+component_h add_dummy_scene_component(
+    game_context_s *context,
+    component_h parent);
 
 #endif

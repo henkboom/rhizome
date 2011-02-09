@@ -6,20 +6,20 @@
 #include "input_handler.h"
 #include "transform.h"
 
-begin_component(renderer);
-    component_subscribe(tick);
-    component_subscribe(renderer_add_job);
-    component_subscribe(input_handler_resize_event);
-end_component();
-
 typedef struct
 {
     array_of(render_job_h) render_jobs;
     render_context_s render_context;
 } renderer_s;
 
-static component_h init(game_context_s *context)
+component_h add_renderer_component(game_context_s *context, component_h parent)
 {
+    context = game_add_component(context, parent, release_component);
+
+    component_subscribe(context, tick);
+    component_subscribe(context, renderer_add_job);
+    component_subscribe(context, input_handler_resize_event);
+
     renderer_s *renderer = malloc(sizeof(renderer_s));
 
     renderer->render_jobs = array_new();
@@ -31,7 +31,7 @@ static component_h init(game_context_s *context)
     return game_get_self(context);
 }
 
-static void release(void *data)
+static void release_component(void *data)
 {
     renderer_s *renderer = data;
 

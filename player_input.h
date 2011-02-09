@@ -9,7 +9,8 @@ typedef struct {
 } player_input_s;
 define_handle_type(player_input_h, const player_input_s);
 
-
-declare_component(player_input, player_input_h);
+player_input_h add_player_input_component(
+    game_context_s *context,
+    component_h parent);
 
 #endif

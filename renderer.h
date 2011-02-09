@@ -5,7 +5,7 @@
 #include "transform.h"
 #include "vect.h"
 
-declare_component(renderer, component_h);
+component_h add_renderer_component(game_context_s *context, component_h parent);
 
 typedef struct {
     int width;

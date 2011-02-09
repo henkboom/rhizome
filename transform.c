@@ -1,14 +1,18 @@
 #include "transform.h"
 
-begin_component(transform);
-    component_subscribe(transform_move);
-    component_subscribe(transform_set_pos);
-    component_subscribe(transform_rotate);
-    component_subscribe(transform_set_orientation);
-end_component();
-
-static transform_h init(game_context_s *context)
+transform_h add_transform_component(
+    game_context_s *context,
+    component_h parent,
+    vect_s pos,
+    quaternion_s orientation)
 {
+    context = game_add_component(context, parent, release_component);
+
+    component_subscribe(context, transform_move);
+    component_subscribe(context, transform_set_pos);
+    component_subscribe(context, transform_rotate);
+    component_subscribe(context, transform_set_orientation);
+
     transform_s *transform = malloc(sizeof(transform_s));
     transform->component = game_get_self(context);
     transform->pos = make_vect(0, 0, 0);
@@ -22,7 +26,7 @@ static transform_h init(game_context_s *context)
     return handle;
 }
 
-static void release(void *data)
+static void release_component(void *data)
 {
     free(data);
 }
@@ -47,7 +51,6 @@ static void handle_transform_set_pos(
     transform->pos = *new_pos;
 }
 
-#include <stdio.h>
 static void handle_transform_rotate(
     game_context_s *context,
     void *data,

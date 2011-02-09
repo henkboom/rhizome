@@ -16,7 +16,6 @@ typedef long long unsigned int component_id_t;
 
 struct _game_s
 {
-
     component_id_t next_component_id;
     array_of(component_h) components;
     array_of(component_h) components_to_remove;
@@ -25,6 +24,16 @@ struct _game_s
 
     array_of(message_s *) messages;
     array_of(subscription_s *) subscriptions;
+
+    // put pointers in this array to have them free'd after the current
+    // message dispatch phase
+    array_of(void *) temporary_storage;
+};
+
+struct _game_context_s
+{
+    game_s *game;
+    component_h component;
 };
 
 static void internal_game_remove_component(game_s *game, component_h component);
@@ -58,6 +67,10 @@ static component_s * component_new(
 
 static void component_release(component_s *component)
 {
+    if(component->release_func != NULL)
+    {
+        component->release_func(component->data);
+    }
     free(component);
 }
 
@@ -195,6 +208,8 @@ game_s * game_new(initial_component_f init)
     game->messages = array_new();
     game->subscriptions = array_new();
 
+    game->temporary_storage = array_new();
+
     game_context_s generic_context;
     generic_context.game = game;
     generic_context.component = null_handle(component_h);
@@ -230,6 +245,9 @@ void game_release(game_s *game)
     assert(array_length(game->subscriptions) == 0);
     array_release(game->subscriptions);
 
+    assert(array_length(game->temporary_storage) == 0);
+    array_release(game->temporary_storage);
+
     free(game);
 }
 
@@ -254,7 +272,7 @@ void game_remove_component(game_context_s *context, component_h component)
     internal_game_remove_component(context->game, component);
 }
 
-game_context_s game_add_component(
+game_context_s * game_add_component(
     game_context_s *context,
     component_h parent,
     component_release_f release_func)
@@ -265,8 +283,12 @@ game_context_s game_add_component(
     handle_new(&handle, component_new(context->game, parent, release_func));
     array_add(context->game->components, handle);
 
-    game_context_s new_context = *context;
-    new_context.component = handle;
+    game_context_s *new_context = malloc(sizeof(game_context_s));
+    array_add(context->game->temporary_storage, new_context);
+
+    *new_context = *context;
+    new_context->component = handle;
+
     return new_context;
 }
 
@@ -502,6 +524,11 @@ static void game_dispatch_messages(game_s *game)
             new_message_count * sizeof(void *));
     }
     array_set_length(game->messages, new_message_count);
+
+    // clean up temporary storage
+    for(int i = 0; i < array_length(game->temporary_storage); i++)
+        free(array_get(game->temporary_storage, i));
+    array_set_length(game->temporary_storage, 0);
 }
 
 //// Entity Removal Processing ////
@@ -546,10 +573,6 @@ static void game_handle_removals(game_s *game)
             component_s *component = handle_get(handle);
             if(component && handle_get(component->parent) == NULL)
             {
-                if(component->release_func != NULL)
-                {
-                    component->release_func(component->data);
-                }
                 component_release(component);
                 handle_release(handle);
             }

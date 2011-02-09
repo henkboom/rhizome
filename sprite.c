@@ -3,10 +3,6 @@
 #include <GL/gl.h>
 #include "renderer.h"
 
-begin_component(sprite);
-    component_subscribe(sprite_track_transform);
-end_component();
-
 typedef struct {
     render_job_s render_job;
     transform_h transform;
@@ -14,8 +10,12 @@ typedef struct {
 
 static void render(const render_context_s *context, const render_job_s *data);
 
-static component_h init(game_context_s *context)
+component_h add_sprite_component(game_context_s *context, component_h parent)
 {
+    context = game_add_component(context, parent, release_component);
+
+    component_subscribe(context, sprite_track_transform);
+
     sprite_s *sprite = malloc(sizeof(sprite_s));
     game_set_component_data(context, sprite);
 
@@ -30,7 +30,7 @@ static component_h init(game_context_s *context)
     return game_get_self(context);
 }
 
-static void release(void *data)
+static void release_component(void *data)
 {
     free(data);
 }

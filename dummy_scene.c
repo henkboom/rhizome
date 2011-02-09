@@ -31,10 +31,6 @@ static component_h init(game_context_s *context)
     dummy_scene->group = add_group_component(context, self);
     dummy_scene->transform =
         add_transform_component(context, dummy_scene->group);
-    send_transform_set_pos(
-        context,
-        handle_get(dummy_scene->transform)->component,
-        make_vect(50, 50, 0));
     dummy_scene->player_input =
         add_player_input_component(context, dummy_scene->group);
 
@@ -49,7 +45,10 @@ static void release(void *data)
     free(data);
 }
 
-static void handle_tick(game_context_s *context, void *data, const nothing *n)
+static void handle_tick(
+    game_context_s *context,
+    void *data,
+    const nothing_s *n)
 {
     dummy_scene_s *dummy_scene = data;
     const transform_s *transform = handle_get(dummy_scene->transform);
@@ -57,7 +56,7 @@ static void handle_tick(game_context_s *context, void *data, const nothing *n)
     if(transform && player_input)
     {
         send_transform_move(context, transform->component,
-            player_input->direction);
+            vect_div(player_input->direction, 100));
         send_transform_rotate(context, transform->component,
             make_quaternion_rotation(
                 vect_normalize(make_vect(1, 1, 1)),

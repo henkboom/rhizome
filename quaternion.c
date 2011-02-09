@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+const quaternion_s quaternion_identity = {1, 0, 0, 0};
+
 double quaternion_magnitude(quaternion_s q)
 {
     return sqrt(quaternion_sqrmag(q));

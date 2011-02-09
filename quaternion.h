@@ -10,6 +10,8 @@ typedef struct {
     double z;
 } quaternion_s;
 
+extern const quaternion_s quaternion_identity;
+
 double quaternion_magnitude(quaternion_s q);
 quaternion_s quaternion_normalize(quaternion_s q);
 quaternion_s make_quaternion_rotation(vect_s axis, double angle);

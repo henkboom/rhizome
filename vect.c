@@ -2,6 +2,11 @@
 
 #include "math.h"
 
+const vect_s vect_zero = {0, 0, 0};
+const vect_s vect_i = {1, 0, 0};
+const vect_s vect_j = {0, 1, 0};
+const vect_s vect_k = {0, 0, 1};
+
 double vect_magnitude(vect_s v)
 {
     return sqrt(vect_dot(v, v));

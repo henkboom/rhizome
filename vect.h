@@ -7,6 +7,11 @@ typedef struct {
     double z;
 } vect_s;
 
+extern const vect_s vect_zero;
+extern const vect_s vect_i;
+extern const vect_s vect_j;
+extern const vect_s vect_k;
+
 static inline vect_s make_vect(double x, double y, double z)
 {
     vect_s v;

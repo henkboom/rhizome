@@ -4,7 +4,7 @@ CC := clang
 SRC :=
 PACKAGES :=
 CFLAGS := -Wall -g -O0 -std=c99
-LDFLAGS := -lglfw -lGL -lGLU -lm
+LDFLAGS := -lglfw -lGL -lGLU -lGLEW -lm
 
 include project.mk
 include $(PACKAGES:%=%/package.mk)

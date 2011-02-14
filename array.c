@@ -1,6 +1,7 @@
 #include "array.h"
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 struct _untyped_array_s

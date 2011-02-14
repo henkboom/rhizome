@@ -1,7 +1,7 @@
 #ifndef RHIZOME__ARRAY_H
 #define RHIZOME__ARRAY_H
 
-#include <stdlib.h>
+#include <stddef.h>
 
 typedef struct {
     void *data;

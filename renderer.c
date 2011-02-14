@@ -44,24 +44,11 @@ static int is_not_null_handle(void *value)
     return handle_get(*(void_h*)value) != NULL;
 }
 
-
 static void handle_tick(game_context_s *context, void *data, const nothing_s *n)
 {
     renderer_s *renderer = data;
 
     array_filter(renderer->render_jobs, is_not_null_handle);
-
-    glViewport(0, 0, renderer->render_context.width,
-               renderer->render_context.height);
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glColor3d(1, 1, 1);
 
     for(int i = 0; i < array_length(renderer->render_jobs); i++)
     {

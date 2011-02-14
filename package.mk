@@ -4,6 +4,7 @@ endif
 
 SRC += \
 	$(RHIZOME_PREFIX)/array.c \
+	$(RHIZOME_PREFIX)/camera.c \
 	$(RHIZOME_PREFIX)/game.c \
 	$(RHIZOME_PREFIX)/group.c \
 	$(RHIZOME_PREFIX)/handle.c \

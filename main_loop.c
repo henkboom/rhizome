@@ -41,7 +41,6 @@ static void main_loop(game_s *game)
         wait_until(next_update_time);
         next_update_time = glfwGetTime();
         game_tick(game);
-        glfwSwapBuffers();
 
         GLenum gl_error = glGetError();
         if(gl_error != GL_NO_ERROR)

@@ -1,5 +1,6 @@
 #include "dummy_scene.h"
 
+#include "camera.h"
 #include "group.h"
 #include "input_handler.h"
 #include "player_input.h"
@@ -30,6 +31,8 @@ component_h add_dummy_scene_component(
 
     add_input_handler_component(context, self);
     add_renderer_component(context, self);
+
+    add_camera_component(context, self);
 
     dummy_scene->group = add_group_component(context, self);
     dummy_scene->transform =

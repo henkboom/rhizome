@@ -46,6 +46,11 @@ static inline double quaternion_sqrmag(quaternion_s q)
     return q.w*q.w + q.x*q.x + q.y*q.y + q.z*q.z;
 }
 
+static inline quaternion_s quaternion_inverse(quaternion_s q)
+{
+    return make_quaternion(q.w, -q.x, -q.y, -q.z);
+}
+
 static inline vect_s quaternion_rotate_vect(quaternion_s q, vect_s v)
 {
     // q*v*q^-1

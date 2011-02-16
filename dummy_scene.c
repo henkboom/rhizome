@@ -29,11 +29,16 @@ component_h add_dummy_scene_component(
 
     component_h self = game_get_self(context);
 
+    // general
     add_input_handler_component(context, self);
     add_renderer_component(context, self);
 
-    add_camera_component(context, self);
+    // camera
+    transform_h camera_transform =
+        add_transform_component(context, self, vect_zero, quaternion_identity);
+    add_camera_component(context, self, camera_transform);
 
+    // the spinning axes
     dummy_scene->group = add_group_component(context, self);
     dummy_scene->transform =
         add_transform_component(context, dummy_scene->group,

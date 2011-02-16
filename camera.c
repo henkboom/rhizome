@@ -5,11 +5,19 @@
 
 #include "renderer.h"
 
-// internal render job state, may be modified by the render itself
+typedef struct _camera_internal_s camera_internal_s;
+
 typedef struct {
     render_job_s render_job;
-    camera_h camera;
+    camera_internal_s *camera;
 } camera_render_job_s;
+
+// wouldn't need this struct if I had component-owned memory/handles
+struct _camera_internal_s {
+    camera_s public;
+    camera_render_job_s render_job; // read-only from main component
+    render_job_h render_job_handle;
+};
 
 static void render(const render_context_s *context, const render_job_s *data);
 
@@ -20,38 +28,36 @@ camera_h add_camera_component(
 {
     context = game_add_component(context, parent, release_component);
 
-    camera_s *camera = malloc(sizeof(camera_s));
+    camera_internal_s *camera = malloc(sizeof(camera_internal_s));
     game_set_component_data(context, camera);
-    camera->transform = transform;
+    camera->public.transform = transform;
 
     camera_h camera_handle;
-    game_add_buffer(context, camera, sizeof(camera_s),
+    game_add_buffer(context, &camera->public, sizeof(camera_s),
             (void_h *)&camera_handle);
 
     // render job
-    camera_render_job_s *camera_render_job =
-        malloc(sizeof(camera_render_job_s));
-    camera_render_job->render_job.render = render;
-    camera_render_job->camera = camera_handle;
+    camera->render_job.render_job.render = render;
+    camera->render_job.camera = camera;
 
-    render_job_h render_job_handle;
-    game_add_buffer(context, camera_render_job, sizeof(camera_render_job_s),
-        (void_h *)&render_job_handle);
-    broadcast_renderer_add_job(context, render_job_handle);
+    handle_new(&camera->render_job_handle, (render_job_s *)&camera->render_job);
+    broadcast_renderer_add_job(context, camera->render_job_handle);
 
     return camera_handle;
 }
 
 static void release_component(void *data)
 {
-    free(data);
+    camera_internal_s *camera = data;
+    handle_release(camera->render_job_handle);
+    free(camera);
 }
 
 static void render(const render_context_s *context, const render_job_s *data)
 {
     const camera_render_job_s *render_job = (const camera_render_job_s *)data;
-    const camera_s *camera = handle_get(render_job->camera);
-    const transform_s *transform = handle_get(camera->transform);
+    camera_internal_s *camera = render_job->camera;
+    const transform_s *transform = handle_get(camera->public.transform);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -62,7 +68,6 @@ static void render(const render_context_s *context, const render_job_s *data)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(65, (double)context->width/context->height, 0.1, 100);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
@@ -80,5 +85,4 @@ static void render(const render_context_s *context, const render_job_s *data)
     glMultMatrixd(rot);
 
     glTranslated(-transform->pos.x, -transform->pos.y, -transform->pos.z);
-
 }

@@ -65,7 +65,7 @@ static void render(const render_context_s *context, void *data)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    quaternion_s rot_quaternion = quaternion_inverse(transform->orientation);
+    quaternion_s rot_quaternion = quaternion_conjugate(transform->orientation);
     double rot[16];
     vect_s rot_i = quaternion_rotate_i(rot_quaternion);
     vect_s rot_j = quaternion_rotate_j(rot_quaternion);

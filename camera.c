@@ -7,19 +7,12 @@
 
 typedef struct _camera_internal_s camera_internal_s;
 
-typedef struct {
-    render_job_s render_job;
-    camera_internal_s *camera;
-} camera_render_job_s;
-
-// wouldn't need this struct if I had component-owned memory/handles
 struct _camera_internal_s {
     camera_s public;
-    camera_render_job_s render_job; // read-only from main component
-    render_job_h render_job_handle;
+    render_job_s render_job;
 };
 
-static void render(const render_context_s *context, const render_job_s *data);
+static void render(const render_context_s *context, void *data);
 
 camera_h add_camera_component(
     game_context_s *context,
@@ -37,27 +30,26 @@ camera_h add_camera_component(
             (void_h *)&camera_handle);
 
     // render job
-    camera->render_job.render_job.render = render;
-    camera->render_job.camera = camera;
+    camera->render_job.render = render;
+    // the renderer is never called after this buffer is gone
+    camera->render_job.data = (void *)handle_get(camera_handle);
 
-    handle_new(&camera->render_job_handle, (render_job_s *)&camera->render_job);
-    broadcast_renderer_add_job(context, camera->render_job_handle);
+    render_job_h render_job_handle;
+    handle_new(&render_job_handle, &camera->render_job);
+    broadcast_renderer_add_job(context, render_job_handle);
 
     return camera_handle;
 }
 
 static void release_component(void *data)
 {
-    camera_internal_s *camera = data;
-    handle_release(camera->render_job_handle);
-    free(camera);
+    free(data);
 }
 
-static void render(const render_context_s *context, const render_job_s *data)
+static void render(const render_context_s *context, void *data)
 {
-    const camera_render_job_s *render_job = (const camera_render_job_s *)data;
-    camera_internal_s *camera = render_job->camera;
-    const transform_s *transform = handle_get(camera->public.transform);
+    const camera_s *camera = data;
+    const transform_s *transform = handle_get(camera->transform);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

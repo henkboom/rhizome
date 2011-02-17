@@ -47,8 +47,10 @@ component_h add_dummy_scene_component(
     dummy_scene->player_input =
         add_player_input_component(context, dummy_scene->group);
 
-    component_h sprite = add_sprite_component(context, dummy_scene->group);
-    send_sprite_track_transform(context, sprite, dummy_scene->transform);
+    add_sprite_component(
+        context,
+        dummy_scene->group,
+        dummy_scene->transform);
 
     return self;
 }

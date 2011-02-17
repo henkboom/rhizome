@@ -15,7 +15,8 @@ typedef struct {
 struct _render_job_s {
     void (*render)(
         const render_context_s *context,
-        const struct _render_job_s *data);
+        void *data);
+    void *data;
 };
 typedef struct _render_job_s render_job_s;
 define_handle_type(render_job_h, const render_job_s);

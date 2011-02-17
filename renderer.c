@@ -54,7 +54,7 @@ static void handle_tick(game_context_s *context, void *data, const nothing_s *n)
     {
         const render_job_s *render_job =
             handle_get(array_get(renderer->render_jobs, i));
-        render_job->render(&renderer->render_context, render_job);
+        render_job->render(&renderer->render_context, render_job->data);
     }
 
     glfwSwapBuffers();

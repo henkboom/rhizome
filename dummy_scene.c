@@ -37,7 +37,12 @@ component_h add_dummy_scene_component(
     transform_h camera_transform = add_transform_component(context, self,
         vect_zero,
         make_look_quaternion(make_vect(0, 0, -1), make_vect(0, 1, 0)));
-    add_camera_component(context, self, camera_transform);
+    camera_h camera = add_camera_component(context, self, camera_transform);
+    component_h camera_component = handle_get(camera)->component;
+    send_camera_set_orthographic(context, camera_component, 1);
+    send_camera_set_height(context, camera_component, 2);
+    send_camera_set_near(context, camera_component, -1);
+    send_camera_set_far(context, camera_component, 1);
 
     // the spinning axes
     dummy_scene->group = add_group_component(context, self);

@@ -21,9 +21,21 @@ camera_h add_camera_component(
 {
     context = game_add_component(context, parent, release_component);
 
+    component_subscribe(context, camera_set_orthographic);
+    component_subscribe(context, camera_set_height);
+    component_subscribe(context, camera_set_fov_y);
+    component_subscribe(context, camera_set_near);
+    component_subscribe(context, camera_set_far);
+
     camera_internal_s *camera = malloc(sizeof(camera_internal_s));
     game_set_component_data(context, camera);
+    camera->public.component = game_get_self(context);
     camera->public.transform = transform;
+    camera->public.is_orthographic = 0;
+    camera->public.height = 2;
+    camera->public.fov_y = 65;
+    camera->public.near = 0.1;
+    camera->public.far = 1000;
 
     camera_h camera_handle;
     game_add_buffer(context, &camera->public, sizeof(camera_s),
@@ -47,6 +59,41 @@ static void release_component(void *data)
     free(data);
 }
 
+static void handle_camera_set_orthographic(game_context_s *context, void *data,
+    const int *is_orthographic)
+{
+    camera_internal_s *camera = data;
+    camera->public.is_orthographic = *is_orthographic;
+}
+
+static void handle_camera_set_height(game_context_s *context, void *data,
+    const double *height)
+{
+    camera_internal_s *camera = data;
+    camera->public.height = *height;
+}
+
+static void handle_camera_set_fov_y(game_context_s *context, void *data,
+    const double *fov_y)
+{
+    camera_internal_s *camera = data;
+    camera->public.fov_y = *fov_y;
+}
+
+static void handle_camera_set_near(game_context_s *context, void *data,
+    const double *near)
+{
+    camera_internal_s *camera = data;
+    camera->public.near = *near;
+}
+
+static void handle_camera_set_far(game_context_s *context, void *data,
+    const double *far)
+{
+    camera_internal_s *camera = data;
+    camera->public.far = *far;
+}
+
 #define SQRT2 1.41421356237309504880
 
 static void render(const render_context_s *context, void *data)
@@ -63,12 +110,25 @@ static void render(const render_context_s *context, void *data)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    double ratio = (double)context->width/context->height;
+    if(camera->is_orthographic)
+    {
+        glOrtho(
+            -ratio*camera->height/2, ratio*camera->height/2,
+            -camera->height/2, camera->height/2,
+            -camera->near, -camera->far);
+    }
+    else
+    {
+        gluPerspective(camera->fov_y, ratio, camera->near, camera->far);
+    }
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // all this is inverted, since a camera transform is an inverse object transform
+    // all this is inverted, since a camera transform is an inverse object
+    // transform
 
     quaternion_s rot_quaternion = quaternion_conjugate(transform->orientation);
 

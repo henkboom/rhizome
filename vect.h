@@ -78,4 +78,6 @@ double vect_magnitude(vect_s v);
 
 vect_s vect_normalize(vect_s v);
 
+void print_vect(vect_s v);
+
 #endif

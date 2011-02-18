@@ -15,8 +15,8 @@ transform_h add_transform_component(
 
     transform_s *transform = malloc(sizeof(transform_s));
     transform->component = game_get_self(context);
-    transform->pos = make_vect(0, 0, 0);
-    transform->orientation = make_quaternion(1, 0, 0, 0);
+    transform->pos = pos;
+    transform->orientation = orientation;
 
     transform_h handle;
     game_add_buffer(

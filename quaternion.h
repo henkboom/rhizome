@@ -14,7 +14,12 @@ extern const quaternion_s quaternion_identity;
 
 double quaternion_magnitude(quaternion_s q);
 quaternion_s quaternion_normalize(quaternion_s q);
+// axis should be normalized
 quaternion_s make_quaternion_rotation(vect_s axis, double angle);
+// i, j, k should be normalized
+quaternion_s make_quaternion_from_ijk(vect_s i, vect_s j, vect_s k);
+quaternion_s make_look_quaternion(vect_s direction, vect_s up);
+void print_quaternion_ijk(quaternion_s q);
 
 static inline quaternion_s make_quaternion(
     double w,

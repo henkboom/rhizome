@@ -34,8 +34,9 @@ component_h add_dummy_scene_component(
     add_renderer_component(context, self);
 
     // camera
-    transform_h camera_transform =
-        add_transform_component(context, self, vect_zero, quaternion_identity);
+    transform_h camera_transform = add_transform_component(context, self,
+        vect_zero,
+        make_look_quaternion(make_vect(0, 0, -1), make_vect(0, 1, 0)));
     add_camera_component(context, self, camera_transform);
 
     // the spinning axes

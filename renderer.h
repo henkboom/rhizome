@@ -13,6 +13,7 @@ typedef struct {
 } render_context_s;
 
 struct _render_job_s {
+    int priority;
     void (*render)(
         const render_context_s *context,
         void *data);

@@ -30,6 +30,7 @@ camera_h add_camera_component(
             (void_h *)&camera_handle);
 
     // render job
+    camera->render_job.priority = 0;
     camera->render_job.render = render;
     // the renderer is never called after this buffer is gone
     camera->render_job.data = (void *)handle_get(camera_handle);
@@ -45,6 +46,8 @@ static void release_component(void *data)
 {
     free(data);
 }
+
+#define SQRT2 1.41421356237309504880
 
 static void render(const render_context_s *context, void *data)
 {
@@ -65,11 +68,24 @@ static void render(const render_context_s *context, void *data)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    // all this is inverted, since a camera transform is an inverse object transform
+
     quaternion_s rot_quaternion = quaternion_conjugate(transform->orientation);
-    double rot[16];
+
+    // I need to rotate the quaternion first because I want the camera to point
+    // in the direction of its local x axis, whereas the opengl coordinate
+    // space points towards the negative z axis.
+
+    quaternion_s screen_rotation = make_quaternion(SQRT2/2, 0, SQRT2/2, 0);
+                              // = make_quaternion_rotation(vect_j, 3.14159/2);
+    rot_quaternion = quaternion_mul(screen_rotation, rot_quaternion);
+
+    // put it all into a matrix
     vect_s rot_i = quaternion_rotate_i(rot_quaternion);
     vect_s rot_j = quaternion_rotate_j(rot_quaternion);
     vect_s rot_k = quaternion_rotate_k(rot_quaternion);
+
+    double rot[16];
     rot[ 0] = rot_i.x; rot[ 1] = rot_i.y; rot[ 2] = rot_i.z; rot[ 3] = 0;
     rot[ 4] = rot_j.x; rot[ 5] = rot_j.y; rot[ 6] = rot_j.z; rot[ 7] = 0;
     rot[ 8] = rot_k.x; rot[ 9] = rot_k.y; rot[10] = rot_k.z; rot[11] = 0;

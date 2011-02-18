@@ -44,11 +44,18 @@ static int is_not_null_handle(void *value)
     return handle_get(*(void_h*)value) != NULL;
 }
 
+static int render_job_cmp(const void *a, const void *b)
+{
+    return handle_get(*(render_job_h *)a)->priority -
+           handle_get(*(render_job_h *)b)->priority;
+}
+
 static void handle_tick(game_context_s *context, void *data, const nothing_s *n)
 {
     renderer_s *renderer = data;
 
     array_filter(renderer->render_jobs, is_not_null_handle);
+    array_qsort(renderer->render_jobs, render_job_cmp);
 
     for(int i = 0; i < array_length(renderer->render_jobs); i++)
     {

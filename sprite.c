@@ -22,6 +22,7 @@ component_h add_sprite_component(
     sprite_s *sprite = malloc(sizeof(sprite_s));
     game_set_component_data(context, sprite);
 
+    sprite->render_job.priority = 1;
     sprite->render_job.render = render;
     sprite->render_job.data = sprite;
     sprite->transform = transform;

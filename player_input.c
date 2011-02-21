@@ -10,6 +10,7 @@ typedef struct {
     int right;
     int up;
     int down;
+    vect_s joystick_direction;
 } player_input_data_s;
 
 player_input_h add_player_input_component(
@@ -19,6 +20,7 @@ player_input_h add_player_input_component(
     context = game_add_component(context, parent, release_component);
 
     component_subscribe(context, input_handler_key_event);
+    component_subscribe(context, input_handler_joystick_event);
 
     player_input_data_s *input = malloc(sizeof(player_input_data_s));
     game_set_component_data(context, input);
@@ -28,6 +30,7 @@ player_input_h add_player_input_component(
     input->right = 0;
     input->up = 0;
     input->down = 0;
+    input->joystick_direction = vect_zero;
 
     player_input_h handle;
     game_add_buffer(context, &input->out, sizeof(player_input_s),
@@ -38,6 +41,37 @@ player_input_h add_player_input_component(
 static void release_component(void *data)
 {
     free(data);
+}
+
+static void refresh_direction(player_input_data_s *input)
+{
+    input->out.direction = make_vect(
+        (input->right ? 1 : 0) - (input->left ? 1 : 0),
+        (input->up    ? 1 : 0) - (input->down ? 1 : 0),
+        0);
+
+    input->out.direction =
+        vect_add(input->out.direction, input->joystick_direction);
+
+    if(vect_sqrmag(input->out.direction) > 1)
+        input->out.direction = vect_normalize(input->out.direction);
+}
+
+static void handle_input_handler_joystick_event(
+    game_context_s *context,
+    void *data,
+    const joystick_event_s *event)
+{
+    player_input_data_s *input = data;
+
+    if(event->joystick == 1 && array_length(event->axes) >= 2)
+    {
+        input->joystick_direction = make_vect(
+            array_get(event->axes, 0),
+            array_get(event->axes, 1),
+            0);
+        refresh_direction(input);
+    }
 }
 
 static void handle_input_handler_key_event(
@@ -58,11 +92,5 @@ static void handle_input_handler_key_event(
     else
         return;
 
-    input->out.direction = make_vect(
-        (input->right ? 1 : 0) - (input->left ? 1 : 0),
-        (input->up    ? 1 : 0) - (input->down ? 1 : 0),
-        0);
-
-    if(vect_sqrmag(input->out.direction) > 1)
-        input->out.direction = vect_normalize(input->out.direction);
+    refresh_direction(input);
 }

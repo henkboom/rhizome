@@ -6,7 +6,7 @@
 #include <GL/glfw.h>
 
 #define WIDTH 640
-#define HEIGHT 480
+#define HEIGHT 360
 
 static void wait_until(double time)
 {

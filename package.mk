@@ -6,6 +6,7 @@ SRC += \
 	$(RHIZOME_PREFIX)/array.c \
 	$(RHIZOME_PREFIX)/camera.c \
 	$(RHIZOME_PREFIX)/game.c \
+	$(RHIZOME_PREFIX)/graphics.c \
 	$(RHIZOME_PREFIX)/group.c \
 	$(RHIZOME_PREFIX)/handle.c \
 	$(RHIZOME_PREFIX)/input_handler.c \

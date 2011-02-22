@@ -141,16 +141,9 @@ static void render(const render_context_s *context, void *data)
     rot_quaternion = quaternion_mul(screen_rotation, rot_quaternion);
 
     // put it all into a matrix
-    vect_s rot_i = quaternion_rotate_i(rot_quaternion);
-    vect_s rot_j = quaternion_rotate_j(rot_quaternion);
-    vect_s rot_k = quaternion_rotate_k(rot_quaternion);
-
-    double rot[16];
-    rot[ 0] = rot_i.x; rot[ 1] = rot_i.y; rot[ 2] = rot_i.z; rot[ 3] = 0;
-    rot[ 4] = rot_j.x; rot[ 5] = rot_j.y; rot[ 6] = rot_j.z; rot[ 7] = 0;
-    rot[ 8] = rot_k.x; rot[ 9] = rot_k.y; rot[10] = rot_k.z; rot[11] = 0;
-    rot[12] = 0;       rot[13] = 0;       rot[14] = 0;       rot[15] = 1;
-    glMultMatrixd(rot);
+    float rot[16];
+    quaternion_to_mat4(rot_quaternion, rot);
+    glMultMatrixf(rot);
 
     glTranslated(-transform->pos.x, -transform->pos.y, -transform->pos.z);
 }

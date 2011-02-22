@@ -90,4 +90,16 @@ static inline vect_s quaternion_rotate_k(quaternion_s q)
         1 - 2*(q.x*q.x + q.y*q.y));
 }
 
+static inline void quaternion_to_mat4(quaternion_s q, float *out)
+{
+    vect_s rot_i = quaternion_rotate_i(q);
+    vect_s rot_j = quaternion_rotate_j(q);
+    vect_s rot_k = quaternion_rotate_k(q);
+
+    out[ 0] = rot_i.x; out[ 1] = rot_i.y; out[ 2] = rot_i.z; out[ 3] = 0;
+    out[ 4] = rot_j.x; out[ 5] = rot_j.y; out[ 6] = rot_j.z; out[ 7] = 0;
+    out[ 8] = rot_k.x; out[ 9] = rot_k.y; out[10] = rot_k.z; out[11] = 0;
+    out[12] = 0;       out[13] = 0;       out[14] = 0;       out[15] = 1;
+}
+
 #endif

@@ -56,7 +56,8 @@ component_h add_dummy_scene_component(
     add_sprite_component(
         context,
         dummy_scene->group,
-        dummy_scene->transform);
+        dummy_scene->transform,
+        NULL);
 
     return self;
 }

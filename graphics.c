@@ -79,7 +79,7 @@ GLuint graphics_create_program(int count, GLuint *shaders)
         log[log_length] = 0;
         
         GLint status;
-        glGetProgramiv(program, GL_COMPILE_STATUS, &status);
+        glGetProgramiv(program, GL_LINK_STATUS, &status);
         if(status == GL_FALSE)
             error(-1, 0, "Link error: %s", log);
         else

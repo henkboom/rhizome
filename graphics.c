@@ -55,7 +55,8 @@ GLuint graphics_create_shader_from_file(
     error_on(size < 0, "create_shader '%s'", filename);
     rewind(file);
 
-    char *data = malloc(size);
+    char *data = malloc(size+1);
+    data[size] = 0;
     error_on(fread(data, size, 1, file) < 1, "create_shader '%s'", filename);
     
     return graphics_create_shader(shader_type, filename, data);
@@ -209,8 +210,6 @@ void mesh_render(mesh_s *mesh)
         GLint location = glGetAttribLocation(mesh->program, attribute->name);
         if(location >= 0)
         {
-            printf("binding %d to %s/%d\n", attribute->buffer,
-                   attribute->name, location);
             glBindBuffer(GL_ARRAY_BUFFER, attribute->buffer);
             glVertexAttribPointer(
                 location, attribute->components, GL_FLOAT, GL_FALSE,
@@ -219,7 +218,6 @@ void mesh_render(mesh_s *mesh)
         }
     }
 
-    printf("%d\n", mesh->program);
     glUseProgram(mesh->program);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->elements.buffer);
     glDrawElements(
